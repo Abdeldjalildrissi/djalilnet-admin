@@ -30,20 +30,27 @@ export default function ArticlesPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery<{ data: Article[]; pagination: { total: number } }>({
+  const { data, isLoading, isError, error } = useQuery<{ data: Article[]; pagination: { total: number } }>({
     queryKey: ["articles", search, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (search) params.set("search", search)
       if (statusFilter) params.set("status", statusFilter)
       const res = await fetch(`/api/articles?${params}`)
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
       return res.json()
     },
+    retry: 1,
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/articles/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/articles/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["articles"] }),
   })
@@ -185,6 +192,11 @@ export default function ArticlesPage() {
           >
             <Loader2 style={{ width: "20px", height: "20px", animation: "spin 1s linear infinite" }} />
             Loading...
+          </div>
+        ) : isError ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "#ef4444" }}>
+            <p>Error loading articles:</p>
+            <pre style={{ marginTop: "1rem", opacity: 0.8 }}>{error instanceof Error ? error.message : "Unknown error"}</pre>
           </div>
         ) : (
           <table className="admin-table">
