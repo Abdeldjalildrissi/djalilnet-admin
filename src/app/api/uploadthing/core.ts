@@ -14,18 +14,12 @@ export const ourFileRouter = {
     },
   })
     .middleware(async ({ req }) => {
-      console.log("Upload middleware triggered");
-      try {
-        const session = await requireAuth(req);
-        if (!session?.user?.id) {
-          throw new UploadThingError("Unauthorized");
-        }
-        return { userId: session.user.id };
-      } catch (err) {
-        console.error("Middleware error:", err);
-        throw new UploadThingError("Unauthorized");
-      }
-    })
+    const session = await requireAuth(req);
+    if (!session?.user) {
+      throw new UploadThingError("Unauthorized");
+    }
+    return { userId: session.user.id };
+  })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("onUploadComplete START:", { userId: metadata.userId, fileUrl: file.url });
 

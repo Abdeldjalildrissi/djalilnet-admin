@@ -11,10 +11,19 @@ import { Ratelimit } from "@upstash/ratelimit"
 import { Redis } from "@upstash/redis"
 import { z } from "zod"
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "1 m"), // Stricter for bulk
-})
+export const dynamic = "force-dynamic"
+
+let ratelimit: Ratelimit | null = null
+
+function getRatelimit() {
+  if (!ratelimit) {
+    ratelimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, "1 m"),
+    })
+  }
+  return ratelimit
+}
 
 const bulkEmailSchema = z.object({
   recipients: z.array(z.string().email()).min(1).max(500), // Max 500 per batch
@@ -35,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
-  const { success } = await ratelimit.limit(ip)
+  const { success } = await getRatelimit().limit(ip)
   if (!success) {
     return Response.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 })
   }

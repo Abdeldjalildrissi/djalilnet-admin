@@ -1,17 +1,19 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { RichTextEditor } from "@/components/editor/rich-text-editor"
-import { ArrowLeft, Save, Globe, Loader2, Trash2 } from "lucide-react"
+import { ArrowLeft, Save, Globe, Loader2, Trash2, Cloud, CheckCircle, FolderOpen } from "lucide-react"
 import Link from "next/link"
 import type { JSONContent } from "@tiptap/react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Category { id: string; name: string }
 interface Article {
   id: string; title: string; slug: string; excerpt: string | null;
   content: JSONContent | null; status: string; categoryId: string | null;
+  readingTime: number | null;
 }
 
 const inputStyle = {
@@ -36,7 +38,10 @@ const labelStyle = {
 
 export default function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const [id, setId] = useState<string | null>(null)
+  const { id } = use(params)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
@@ -44,13 +49,9 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
   const [content, setContent] = useState<JSONContent | null>(null)
   const [contentHtml, setContentHtml] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null)
 
-  // Resolve params
-  useEffect(() => {
-    params.then((p) => setId(p.id))
-  }, [params])
-
-  const { data: articleData } = useQuery<{ data: Article }>({
+  const { data: articleData, isLoading: isArticleLoading } = useQuery<{ data: Article }>({
     queryKey: ["article", id],
     queryFn: () => fetch(`/api/articles/${id}`).then((r) => r.json()),
     enabled: !!id,
@@ -78,10 +79,38 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     setContentHtml(html)
   }, [])
 
+  // Auto-save to LocalStorage
+  useEffect(() => {
+    if (!id || !title) return
+    const timer = setInterval(() => {
+      const draft = { title, slug, excerpt, categoryId, content, contentHtml }
+      localStorage.setItem(`article-draft-${id}`, JSON.stringify(draft))
+      setLastAutoSave(new Date())
+    }, 15000)
+    return () => clearInterval(timer)
+  }, [id, title, slug, excerpt, categoryId, content, contentHtml])
+
+  // Background Server Save (only for drafts)
+  useEffect(() => {
+    if (articleData?.data.status !== "draft" || !id || !title) return
+    const timer = setInterval(async () => {
+      try {
+        await fetch(`/api/articles/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, slug, content, contentHtml, excerpt, categoryId: categoryId || null, status: "draft" }),
+        })
+      } catch (e) {
+        console.warn("Background auto-save failed", e)
+      }
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [id, title, slug, content, contentHtml, excerpt, categoryId, articleData])
+
   const save = async (status: "draft" | "published") => {
     setIsSaving(true)
     try {
-      await fetch(`/api/articles/${id}`, {
+      const res = await fetch(`/api/articles/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,7 +118,13 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
           categoryId: categoryId || null, status,
         }),
       })
+      if (!res.ok) throw new Error("Failed to save")
+      
+      toast({ title: "Success", description: `Article ${status === "published" ? "published" : "saved"} successfully.` })
+      queryClient.invalidateQueries({ queryKey: ["article", id] })
       router.refresh()
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
     } finally {
       setIsSaving(false)
     }
@@ -99,9 +134,10 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     if (!confirm("Delete this article permanently?")) return
     await fetch(`/api/articles/${id}`, { method: "DELETE" })
     router.push("/articles")
+    toast({ title: "Deleted", description: "Article has been removed." })
   }
 
-  if (!id) return <div style={{ padding: "2rem", color: "#94a3b8" }}>Loading...</div>
+  if (isArticleLoading) return <div style={{ padding: "2rem", color: "#94a3b8" }}>Loading...</div>
 
   return (
     <div>
@@ -114,7 +150,13 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
           </Link>
           <h1 style={{ fontSize: "1.25rem", fontWeight: "700", margin: 0 }}>Edit Article</h1>
         </div>
-        <div style={{ display: "flex", gap: "0.625rem" }}>
+        <div style={{ display: "flex", gap: "0.625rem", alignItems: "center" }}>
+          {lastAutoSave && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", color: "#64748b", marginRight: "0.5rem" }}>
+              <Cloud style={{ width: "14px", height: "14px", color: "#10b981" }} />
+              Saved {lastAutoSave.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
           <button
             onClick={handleDelete}
             style={{
@@ -190,11 +232,16 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
 
           <div>
             <label style={labelStyle}>Status</label>
-            <span
-              className={`badge badge-${articleData?.data.status ?? "draft"}`}
-            >
-              {articleData?.data.status ?? "draft"}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+               <span style={{ 
+                 fontSize: "0.6875rem", fontWeight: "700", textTransform: "uppercase",
+                 padding: "0.25rem 0.5rem", borderRadius: "1rem",
+                 background: articleData?.data.status === "published" ? "#dcfce7" : "#f1f5f9",
+                 color: articleData?.data.status === "published" ? "#15803d" : "#475569"
+               }}>
+                {articleData?.data.status}
+              </span>
+            </div>
           </div>
 
           <div>

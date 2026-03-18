@@ -9,15 +9,21 @@ export const articleQuerySchema = z.object({
 })
 
 export const createArticleSchema = z.object({
-  title: z.string().min(1, "Title is required").max(500),
-  slug: z.string().optional(),
+  title: z.string()
+    .min(3, "Title must be at least 3 characters")
+    .max(200, "Title is too long"),
+  slug: z.string()
+    .min(3)
+    .max(255)
+    .regex(/^[a-z0-9-]+$/, "Slug must only contain lowercase letters, numbers, and hyphens")
+    .optional(),
   content: z.record(z.string(), z.unknown()).optional(),
-  contentHtml: z.string().optional(),
-  excerpt: z.string().max(500).optional(),
-  coverImage: z.string().nullable().optional(),
+  contentHtml: z.string().min(1, "Content is required").optional(),
+  excerpt: z.string().max(500, "Excerpt is too long").optional(),
+  coverImage: z.string().url("Invalid cover image URL").nullable().optional(),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
-  categoryId: z.string().uuid().optional().nullable(),
-  tags: z.array(z.string()).default([]),
+  categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
+  tags: z.array(z.string().max(50)).max(20, "Too many tags").default([]),
 })
 
 export const updateArticleSchema = createArticleSchema.partial()

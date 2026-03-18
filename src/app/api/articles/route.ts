@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+export const dynamic = "force-dynamic"
 import { db } from "@/db"
 import { articles, categories, users } from "@/db/schema"
 import { eq, desc, like, and, sql, ilike } from "drizzle-orm"
@@ -8,7 +9,7 @@ import {
   articleQuerySchema,
   createArticleSchema,
 } from "@/lib/validations/articles"
-import { slugify } from "@/lib/utils"
+import { slugify, sanitize, computeReadingTime } from "@/lib/utils"
 
 export async function GET(request: NextRequest) {
   const session = await requireAuth(request)
@@ -92,19 +93,23 @@ export async function POST(request: NextRequest) {
 
   const slug = parsed.data.slug || slugify(parsed.data.title)
 
+  const sanitizedHtml = parsed.data.contentHtml ? sanitize(parsed.data.contentHtml) : ""
+  const readingTime = computeReadingTime(sanitizedHtml)
+
   const [article] = await db
     .insert(articles)
     .values({
       title: parsed.data.title,
       slug,
       content: parsed.data.content as Record<string, unknown>,
-      contentHtml: parsed.data.contentHtml,
+      contentHtml: sanitizedHtml,
       excerpt: parsed.data.excerpt,
       status: parsed.data.status,
       categoryId: parsed.data.categoryId,
       authorId: session.user.id,
       coverImage: parsed.data.coverImage || null,
       tags: parsed.data.tags,
+      readingTime,
       publishedAt:
         parsed.data.status === "published" ? new Date() : undefined,
     })

@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { RichTextEditor } from "@/components/editor/rich-text-editor"
 import { slugify } from "@/lib/utils"
-import { ArrowLeft, Save, Globe, Loader2 } from "lucide-react"
+import { ArrowLeft, Save, Globe, Loader2, Cloud, FolderOpen } from "lucide-react"
 import Link from "next/link"
 import type { JSONContent } from "@tiptap/react"
+import { useEffect } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Category { id: string; name: string }
 
@@ -41,6 +43,9 @@ export default function NewArticlePage() {
   const [contentHtml, setContentHtml] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null)
+  const [hasDraft, setHasDraft] = useState(false)
+  const { toast } = useToast()
 
   const { data: categoriesData } = useQuery<{ data: Category[] }>({
     queryKey: ["categories"],
@@ -58,6 +63,46 @@ export default function NewArticlePage() {
     setContent(json)
     setContentHtml(html)
   }, [])
+
+  // Auto-save to LocalStorage
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (title || content) {
+        const draft = { title, slug, excerpt, categoryId, content, contentHtml }
+        localStorage.setItem("article-draft-new", JSON.stringify(draft))
+        setLastAutoSave(new Date())
+      }
+    }, 10000)
+    return () => clearInterval(timer)
+  }, [title, slug, excerpt, categoryId, content, contentHtml])
+
+  // Restore draft
+  useEffect(() => {
+    const saved = localStorage.getItem("article-draft-new")
+    if (saved) {
+      setHasDraft(true)
+    }
+  }, [])
+
+  const restoreDraft = () => {
+    const saved = localStorage.getItem("article-draft-new")
+    if (saved) {
+      const draft = JSON.parse(saved)
+      setTitle(draft.title || "")
+      setSlug(draft.slug || "")
+      setExcerpt(draft.excerpt || "")
+      setCategoryId(draft.categoryId || "")
+      setContent(draft.content || null)
+      setContentHtml(draft.contentHtml || "")
+      setHasDraft(false)
+      toast({ title: "Draft Restored", description: "Your previous work has been loaded." })
+    }
+  }
+
+  const discardDraft = () => {
+    localStorage.removeItem("article-draft-new")
+    setHasDraft(false)
+  }
 
   const save = async (status: "draft" | "published") => {
     const loading = status === "draft" ? setIsSaving : setIsPublishing
@@ -107,7 +152,13 @@ export default function NewArticlePage() {
             New Article
           </h1>
         </div>
-        <div style={{ display: "flex", gap: "0.625rem" }}>
+        <div style={{ display: "flex", gap: "0.625rem", alignItems: "center" }}>
+          {lastAutoSave && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontSize: "0.75rem", color: "#64748b", marginRight: "0.5rem" }}>
+              <Cloud style={{ width: "14px", height: "14px", color: "#10b981" }} />
+              Saved {lastAutoSave.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
           <button
             onClick={() => save("draft")}
             disabled={isSaving || !title}
@@ -148,6 +199,26 @@ export default function NewArticlePage() {
           </button>
         </div>
       </div>
+
+      {/* Draft Recovery Banner */}
+      {hasDraft && (
+        <div style={{ 
+          background: "#fffbeb", border: "1px solid #fef3c7", borderRadius: "0.75rem", 
+          padding: "0.75rem 1rem", marginBottom: "1.25rem", display: "flex", 
+          justifyContent: "space-between", alignItems: "center" 
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <FolderOpen style={{ width: "18px", height: "18px", color: "#d97706" }} />
+            <p style={{ margin: 0, fontSize: "0.875rem", color: "#92400e" }}>
+              You have an unsaved draft in your browser. Would you like to restore it?
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button onClick={discardDraft} style={{ border: "none", background: "none", color: "#64748b", fontSize: "0.875rem", cursor: "pointer" }}>Discard</button>
+            <button onClick={restoreDraft} style={{ background: "#f59e0b", color: "white", border: "none", padding: "0.375rem 0.875rem", borderRadius: "0.375rem", fontSize: "0.875rem", cursor: "pointer", fontWeight: "600" }}>Restore</button>
+          </div>
+        </div>
+      )}
 
       {/* Editor + Sidebar */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "1rem", alignItems: "start" }}>

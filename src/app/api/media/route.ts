@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+export const dynamic = "force-dynamic"
 import { db } from "@/db"
 import { articles, users, media } from "@/db/schema"
 import { sql, isNotNull, desc } from "drizzle-orm"

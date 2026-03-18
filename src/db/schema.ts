@@ -40,6 +40,7 @@ export const emailStatusEnum = pgEnum("email_status", [
   "draft",
   "failed",
   "bounced",
+  "delivered",
 ])
 
 export const queueStatusEnum = pgEnum("queue_status", [
@@ -320,6 +321,40 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   articles: many(articles),
 }))
 
+// ─── MEDIA & ALBUMS ─────────────────────────────────────────────────────────
+
+export const mediaAlbums = pgTable("media_albums", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export const media = pgTable("media", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  url: text("url").notNull(),
+  name: text("name").notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // e.g., 'image/png', 'image/jpeg'
+  key: text("key").notNull(), // uploadthing file key
+  size: integer("size"), // file size in bytes
+  albumId: uuid("album_id").references(() => mediaAlbums.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+export const mediaAlbumsRelations = relations(mediaAlbums, ({ many }) => ({
+  media: many(media),
+}))
+
+export const mediaRelations = relations(media, ({ one }) => ({
+  album: one(mediaAlbums, {
+    fields: [media.albumId],
+    references: [mediaAlbums.id],
+  }),
+}))
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect
@@ -330,6 +365,8 @@ export type Category = typeof categories.$inferSelect
 export type Email = typeof emails.$inferSelect
 export type EmailTemplate = typeof emailTemplates.$inferSelect
 export type ActivityLog = typeof activityLogs.$inferSelect
+export type Media = typeof media.$inferSelect
+export type MediaAlbum = typeof mediaAlbums.$inferSelect
 
 
 // ─── DJALILNET LEGACY FORMS & ANALYTICS ─────────────────────────────────────
@@ -426,14 +463,4 @@ export const siteSettings = pgTable("site_settings", {
   key: varchar("key", { length: 100 }).notNull().unique(), // e.g., 'personal_info'
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
-
-export const media = pgTable("media", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  url: text("url").notNull(),
-  name: text("name").notNull(),
-  type: varchar("type", { length: 100 }).notNull(), // e.g., 'image/png', 'image/jpeg'
-  key: text("key").notNull(), // uploadthing file key
-  size: integer("size"), // file size in bytes
-  createdAt: timestamp("created_at").defaultNow().notNull(),
 })

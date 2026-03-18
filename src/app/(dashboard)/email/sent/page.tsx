@@ -195,7 +195,7 @@ export default function SentPage() {
                 {selectedEmail.bodyHtml ? (
                   <div
                     style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155" }}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.bodyHtml) }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.bodyHtml ?? "") }}
                   />
                 ) : (
                   <pre style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155", whiteSpace: "pre-wrap" }}>

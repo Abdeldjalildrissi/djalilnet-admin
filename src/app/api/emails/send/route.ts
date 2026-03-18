@@ -1,27 +1,36 @@
 import { NextRequest } from "next/server"
 import { db } from "@/db"
-import { emails, emailTemplates } from "@/db/schema"
+import { emails, emailTemplates, emailQueue } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth-helpers"
 import { logActivity } from "@/lib/activity-logger"
 import { sendEmailSchema } from "@/lib/validations/email"
-import { FROM_EMAIL } from "@/lib/resend"
+import { resend, FROM_EMAIL } from "@/lib/resend"
 import { mergeTemplateVariables, htmlToText } from "@/lib/utils"
 import { queue } from "@/lib/email-queue"
 import { Ratelimit } from "@upstash/ratelimit"
 import { Redis } from "@upstash/redis"
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"),
-})
+export const dynamic = "force-dynamic"
+
+let ratelimit: Ratelimit | null = null
+
+function getRatelimit() {
+  if (!ratelimit) {
+    ratelimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, "1 m"),
+    })
+  }
+  return ratelimit
+}
 
 export async function POST(request: NextRequest) {
   const session = await requireAuth(request)
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
-  const { success } = await ratelimit.limit(ip)
+  const { success } = await getRatelimit().limit(ip)
   if (!success) {
     return Response.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 })
   }
@@ -64,21 +73,56 @@ export async function POST(request: NextRequest) {
       subject,
       bodyHtml: finalHtml,
       bodyText: htmlToText(finalHtml),
-      status: "draft", // Pending queue
+      status: "draft",
       sentById: session.user.id,
       templateId: templateId ?? null,
     })
     .returning()
 
-  // Enqueue job
-  await queue.add("send", {
-    to: toArray,
-    cc: cc ?? [],
+  // Enqueue in DB for history/audit
+  const [queueItem] = await db.insert(emailQueue).values({
+    toAddress: toArray.join(", "),
     subject,
-    html: finalHtml,
-    emailId: sentEmail.id,
-    attachments: attachments?.map(a => ({ filename: a.filename, path: a.url })),
-  }, { priority: 1 })
+    bodyHtml: finalHtml,
+    status: "pending",
+    templateId: templateId ?? null,
+  }).returning()
+
+  // Immediate delivery (Standard for Hobby plan)
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: toArray,
+      cc: cc ?? [],
+      subject,
+      html: finalHtml,
+      text: htmlToText(finalHtml),
+      headers: {
+        "X-Entity-Ref-ID": `${Date.now()}-${session.user.id}`,
+      },
+      attachments: attachments?.map(a => ({ filename: a.filename, path: a.url })),
+    })
+
+    if (error) throw new Error(error.message)
+
+    await db.update(emails)
+      .set({ status: "sent", resendId: data!.id, sentAt: new Date() })
+      .where(eq(emails.id, sentEmail.id))
+
+    await db.update(emailQueue)
+      .set({ status: "completed", processedAt: new Date() })
+      .where(eq(emailQueue.id, queueItem.id))
+
+  } catch (err: any) {
+    console.error("[SendAPI] Immediate send failed, item remains pending in queue:", err)
+    await db.update(emails)
+      .set({ status: "failed", failureReason: err.message })
+      .where(eq(emails.id, sentEmail.id))
+    
+    await db.update(emailQueue)
+      .set({ status: "failed", error: err.message })
+      .where(eq(emailQueue.id, queueItem.id))
+  }
 
   logActivity({
     userId: session.user.id,

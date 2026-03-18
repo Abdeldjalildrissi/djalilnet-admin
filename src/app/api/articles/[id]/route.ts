@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server"
+export const dynamic = "force-dynamic"
 import { db } from "@/db"
 import { articles } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth-helpers"
 import { logActivity } from "@/lib/activity-logger"
 import { updateArticleSchema } from "@/lib/validations/articles"
+import { sanitize, computeReadingTime } from "@/lib/utils"
 
 export async function GET(
   request: NextRequest,
@@ -53,11 +55,20 @@ export async function PATCH(
   const wasPublished = existing.status === "published"
   const nowPublishing = parsed.data.status === "published"
 
+  const sanitizedHtml = parsed.data.contentHtml 
+    ? sanitize(parsed.data.contentHtml) 
+    : existing.contentHtml || ""
+  const readingTime = parsed.data.contentHtml 
+    ? computeReadingTime(sanitizedHtml) 
+    : existing.readingTime
+
   const [updated] = await db
     .update(articles)
     .set({
       ...parsed.data,
       content: parsed.data.content as Record<string, unknown> | undefined,
+      contentHtml: sanitizedHtml,
+      readingTime,
       categoryId: parsed.data.categoryId ?? existing.categoryId,
       coverImage: parsed.data.coverImage || existing.coverImage,
       publishedAt:

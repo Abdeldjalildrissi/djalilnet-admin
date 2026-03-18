@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow, format } from "date-fns"
+import DOMPurify from "isomorphic-dompurify"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -58,6 +59,22 @@ export function htmlToText(html: string): string {
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str
   return str.substring(0, length) + "..."
+}
+
+export function sanitize(html: string): string {
+  if (!html) return ""
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "u", "s", "strike",
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      "ul", "ol", "li", "blockquote", "code", "pre",
+      "a", "img", "figure", "figcaption",
+      "table", "thead", "tbody", "tr", "th", "td",
+      "hr", "span", "div",
+    ],
+    ALLOWED_ATTR: ["href", "src", "alt", "class", "target", "rel", "title", "width", "height"],
+    ALLOW_DATA_ATTR: false,
+  })
 }
 
 export function computeReadingTime(html: string): number {
