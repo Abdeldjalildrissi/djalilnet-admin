@@ -16,10 +16,12 @@ import {
   Trash2,
   FolderOpen,
   ChevronRight,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText,
+  Video
 } from "lucide-react"
 import { useState, useMemo } from "react"
-import { UploadButton } from "@/lib/uploadthing"
+import { UploadDropzone } from "@/lib/uploadthing"
 import { useToast } from "@/hooks/use-toast"
 import { 
   Dialog, 
@@ -254,31 +256,32 @@ export default function MediaPage() {
 
       {/* Main Content */}
       <main>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "1.5rem" }}>
           <div>
+            <h1 style={{ fontSize: "1.375rem", fontWeight: "700", margin: "0 0 0.5rem" }}>Media Library</h1>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#64748b", fontSize: "0.875rem", marginBottom: "0.25rem" }}>
-              <span>Media Library</span>
-              <ChevronRight style={{ width: "14px", height: "14px" }} />
+              <FolderOpen style={{ width: "16px", height: "16px" }} />
               <span style={{ color: "#0f172a", fontWeight: "600" }}>{currentAlbumName}</span>
             </div>
           </div>
-          <UploadButton
+        </div>
+
+        {/* Upload Dropzone */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <UploadDropzone
             endpoint="imageUploader"
             onClientUploadComplete={(res) => {
-              // If we are in an album, we might want to automatically tag the upload (Phase 4 improvement)
               queryClient.invalidateQueries({ queryKey: ["media-items"] })
               queryClient.invalidateQueries({ queryKey: ["media-albums"] })
-              toast({ title: "Upload Complete", description: "New media added to library" })
+              toast({ title: "Upload Complete", description: "Successfully added to the library" })
             }}
             onUploadError={(error: Error) => {
               toast({ variant: "destructive", title: "Upload Failed", description: error.message })
             }}
             appearance={{
-              button: {
-                background: "#3b82f6", color: "white", fontSize: "0.875rem",
-                fontWeight: "600", borderRadius: "0.5rem", padding: "0.625rem 1.25rem",
-                height: "auto", width: "auto"
-              },
+              container: { border: "2px dashed #e2e8f0", background: "white", borderRadius: "0.75rem", padding: "2rem" },
+              label: { color: "#3b82f6", fontWeight: "600" },
+              button: { background: "#3b82f6" },
               allowedContent: { display: "none" }
             }}
           />
@@ -329,7 +332,11 @@ export default function MediaPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden", position: "relative"
                 }}>
-                  {item.url.startsWith("http") ? (
+                  {item.type?.includes("pdf") ? (
+                    <FileText style={{ width: "40px", height: "40px", color: "#ef4444" }} />
+                  ) : item.type?.includes("video") ? (
+                    <Video style={{ width: "40px", height: "40px", color: "#3b82f6" }} />
+                  ) : item.url.startsWith("http") ? (
                     <img 
                       src={item.url} 
                       alt={item.title} 
