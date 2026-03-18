@@ -40,7 +40,11 @@ function ComposeInner() {
 
   const { data: templatesData } = useQuery<{ data: Template[] }>({
     queryKey: ["email-templates"],
-    queryFn: () => fetch("/api/email/templates").then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/email/templates")
+      if (!r.ok) throw new Error("Failed to fetch templates")
+      return r.json()
+    },
   })
 
   const handleTemplateChange = (id: string) => {

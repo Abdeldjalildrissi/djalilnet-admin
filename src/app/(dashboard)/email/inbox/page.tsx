@@ -23,13 +23,16 @@ export default function InboxPage() {
         filter,
       })
       const res = await fetch(`/api/emails?${params}`)
+      if (!res.ok) throw new Error("Failed to fetch emails")
       return res.json()
     },
   })
 
   const markReadMutation = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/emails/${id}/read`, { method: "PATCH" }),
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/emails/${id}/read`, { method: "PATCH" })
+      if (!res.ok) throw new Error("Failed to mark email as read")
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["emails"] }),
   })
 

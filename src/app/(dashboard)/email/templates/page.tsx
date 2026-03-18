@@ -26,7 +26,11 @@ export default function TemplatesPage() {
 
   const { data, isLoading } = useQuery<{ data: Template[] }>({
     queryKey: ["email-templates"],
-    queryFn: () => fetch("/api/email/templates").then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/email/templates")
+      if (!r.ok) throw new Error("Failed to fetch templates")
+      return r.json()
+    },
   })
 
   // Basic variable extraction from {{var}} syntax
@@ -60,7 +64,8 @@ export default function TemplatesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this template?")) return
     try {
-      await fetch(`/api/email/templates/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/email/templates/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete template")
       queryClient.invalidateQueries({ queryKey: ["email-templates"] })
     } catch (err) {
       alert("Error deleting template")
@@ -130,7 +135,7 @@ export default function TemplatesPage() {
           </div>
           
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: "500", color: "#374151", marginBottom: "0.375rem" }}>Template Name</label>
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Welcome Email" style={inputStyle} />
