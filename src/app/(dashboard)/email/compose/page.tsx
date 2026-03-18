@@ -4,11 +4,13 @@ import { useState, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { RichTextEditor } from "@/components/editor/rich-text-editor"
-import { ArrowLeft, Send, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, Loader2, Paperclip, X, FileIcon } from "lucide-react"
 import Link from "next/link"
 import type { JSONContent } from "@tiptap/react"
+import { UploadButton } from "@/lib/uploadthing"
 
 interface Template { id: string; name: string; subject: string; bodyHtml: string }
+interface Attachment { filename: string; url: string; size?: number }
 
 const inputStyle = {
   width: "100%",
@@ -30,6 +32,8 @@ function ComposeInner() {
   const [subject, setSubject] = useState(searchParams.get("subject") ?? "")
   const [templateId, setTemplateId] = useState("")
   const [bodyHtml, setBodyHtml] = useState("")
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  
   const [isSending, setIsSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState("")
@@ -66,6 +70,7 @@ function ComposeInner() {
           subject,
           bodyHtml,
           templateId: templateId || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
         }),
       })
       if (res.ok) {
@@ -78,6 +83,10 @@ function ComposeInner() {
     } finally {
       setIsSending(false)
     }
+  }
+
+  const removeAttachment = (url: string) => {
+    setAttachments(prev => prev.filter(a => a.url !== url))
   }
 
   if (sent) {
@@ -156,22 +165,53 @@ function ComposeInner() {
           </div>
         ))}
 
-        {/* Template */}
-        <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f1f5f9" }}>
-          <span style={{ width: "80px", padding: "0.75rem 1rem", fontSize: "0.8125rem", fontWeight: "500", color: "#94a3b8", flexShrink: 0 }}>
-            Template
-          </span>
-          <select
-            value={templateId}
-            onChange={(e) => handleTemplateChange(e.target.value)}
-            style={{ flex: 1, padding: "0.75rem 1rem 0.75rem 0", border: "none", fontSize: "0.875rem", outline: "none", background: "transparent" }}
-          >
-            <option value="">No template</option>
-            {templatesData?.data?.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+        {/* Template & Attachments Row */}
+        <div style={{ display: "flex", borderBottom: "1px solid #f1f5f9" }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", borderRight: "1px solid #f1f5f9" }}>
+            <span style={{ width: "80px", padding: "0.75rem 1rem", fontSize: "0.8125rem", fontWeight: "500", color: "#94a3b8", flexShrink: 0 }}>
+              Template
+            </span>
+            <select
+              value={templateId}
+              onChange={(e) => handleTemplateChange(e.target.value)}
+              style={{ flex: 1, padding: "0.75rem 1rem 0.75rem 0", border: "none", fontSize: "0.875rem", outline: "none", background: "transparent" }}
+            >
+              <option value="">No template</option>
+              {templatesData?.data?.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <UploadButton
+              endpoint="imageUploader"
+              onClientUploadComplete={(res) => {
+                setAttachments(prev => [...prev, ...res.map(f => ({ filename: f.name, url: f.url, size: f.size }))])
+              }}
+              className="ut-button:h-8 ut-button:px-3 ut-button:text-xs ut-button:bg-slate-100 ut-button:text-slate-600 ut-button:border-slate-200 ut-button:hover:bg-slate-200 ut-allowed-content:hidden"
+              content={{
+                button({ ready }) {
+                  return <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><Paperclip style={{ width: "12px" }}/> {ready ? "Attach" : "..."}</div>
+                }
+              }}
+            />
+          </div>
         </div>
+
+        {/* Selected Attachments */}
+        {attachments.length > 0 && (
+          <div style={{ padding: "0.75rem 1rem", display: "flex", flexWrap: "wrap", gap: "0.5rem", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+            {attachments.map((file) => (
+              <div key={file.url} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "4px 8px", background: "white", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#475569" }}>
+                <FileIcon style={{ width: "12px", height: "12px", color: "#94a3b8" }} />
+                <span style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.filename}</span>
+                <button onClick={() => removeAttachment(file.url)} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <X style={{ width: "12px", height: "12px" }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Body */}
         <div>
@@ -179,7 +219,7 @@ function ComposeInner() {
             content={bodyHtml ? undefined : null}
             onChange={handleEditorChange}
             placeholder="Write your email..."
-            minHeight="350px"
+            minHeight="400px"
           />
         </div>
       </div>

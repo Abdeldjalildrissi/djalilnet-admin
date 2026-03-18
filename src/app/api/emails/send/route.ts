@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: parsed.error.flatten() }, { status: 422 })
   }
 
-  const { to, cc, subject, bodyHtml, templateId } = parsed.data
+  const { to, cc, subject, bodyHtml, templateId, attachments } = parsed.data
   let finalHtml = bodyHtml
 
   if (templateId) {
@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
     subject,
     html: finalHtml,
     emailId: sentEmail.id,
+    attachments: attachments?.map(a => ({ filename: a.filename, path: a.url })),
   }, { priority: 1 })
 
   logActivity({

@@ -7,6 +7,10 @@ export const sendEmailSchema = z.object({
   bodyHtml: z.string().min(1, "Email body is required"),
   templateId: z.string().uuid().optional(),
   variables: z.record(z.string(), z.string()).optional(),
+  attachments: z.array(z.object({
+    filename: z.string(),
+    url: z.string().url(),
+  })).optional(),
 })
 
 export const emailQuerySchema = z.object({

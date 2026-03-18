@@ -23,7 +23,7 @@ export const queue = new Queue("emails", {
 
 // Run the worker inside the application context
 export const emailWorker = new Worker("emails", async (job) => {
-  const { to, cc, subject, html, emailId } = job.data
+  const { to, cc, subject, html, emailId, attachments } = job.data
   
   const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
@@ -31,6 +31,7 @@ export const emailWorker = new Worker("emails", async (job) => {
     cc,
     subject,
     html,
+    attachments,
   })
   
   if (error) {
