@@ -21,19 +21,16 @@ export const ourFileRouter = {
     return { userId: session.user.id };
   })
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log("onUploadComplete START:", { userId: metadata.userId, fileUrl: file.url });
-
       try {
-        const res = await db.insert(media).values({
+        await db.insert(media).values({
           url: file.url,
           name: file.name,
           type: file.type || "image/png",
           key: file.key,
           size: file.size,
         });
-        console.log("DB Insert success:", res);
       } catch (err) {
-        console.error("DB Insert FAILED:", err);
+        console.error("[uploadthing] DB insert failed:", err);
       }
 
       return { uploadedBy: metadata.userId };
