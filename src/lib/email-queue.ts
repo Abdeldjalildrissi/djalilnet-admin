@@ -5,9 +5,13 @@ import { emails, emailQueue } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { resend, FROM_EMAIL } from "./resend"
 
-// Ensure valid connection logic with Upstash Redis
-const connection = new IORedis(process.env.UPSTASH_REDIS_REST_URL!, {
-  tls: { rejectUnauthorized: false },
+// Ensure valid connection logic with Upstash Redis (Standard Redis Protocol)
+const redisUrl = process.env.UPSTASH_REDIS_URL || process.env.REDIS_URL;
+if (!redisUrl) {
+  console.warn("[EmailQueue] UPSTASH_REDIS_URL is not defined. Queue will not function.");
+}
+
+const connection = new IORedis(redisUrl!, {
   maxRetriesPerRequest: null,
 })
 
