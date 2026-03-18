@@ -42,6 +42,13 @@ export const emailStatusEnum = pgEnum("email_status", [
   "bounced",
 ])
 
+export const queueStatusEnum = pgEnum("queue_status", [
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+])
+
 // ─── USERS ──────────────────────────────────────────────────────────────────
 
 export const users = pgTable(
@@ -215,6 +222,10 @@ export const emails = pgTable(
     isRead: boolean("is_read").default(false).notNull(),
     isStarred: boolean("is_starred").default(false).notNull(),
     resendId: varchar("resend_id", { length: 255 }),
+    openedAt: timestamp("opened_at"),
+    clickedAt: timestamp("clicked_at"),
+    failureReason: text("failure_reason"),
+    retryCount: integer("retry_count").default(0),
     templateId: uuid("template_id").references(() => emailTemplates.id, {
       onDelete: "set null",
     }),
@@ -238,6 +249,24 @@ export const emails = pgTable(
     ),
   })
 )
+
+// ─── EMAIL QUEUE ─────────────────────────────────────────────────────────────
+
+export const emailQueue = pgTable("email_queue", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bullJobId: varchar("bull_job_id", { length: 255 }),
+  toAddress: varchar("to_address", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  bodyHtml: text("body_html"),
+  templateId: uuid("template_id"),
+  status: queueStatusEnum("status").default("pending").notNull(),
+  attempts: integer("attempts").default(0),
+  maxAttempts: integer("max_attempts").default(3),
+  error: text("error"),
+  scheduledAt: timestamp("scheduled_at"),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
 
 // ─── ACTIVITY LOGS ───────────────────────────────────────────────────────────
 
@@ -397,4 +426,14 @@ export const siteSettings = pgTable("site_settings", {
   key: varchar("key", { length: 100 }).notNull().unique(), // e.g., 'personal_info'
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+export const media = pgTable("media", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  url: text("url").notNull(),
+  name: text("name").notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // e.g., 'image/png', 'image/jpeg'
+  key: text("key").notNull(), // uploadthing file key
+  size: integer("size"), // file size in bytes
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 })

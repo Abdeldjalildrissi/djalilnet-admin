@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "At least one field (name or image) is required" }, { status: 400 })
   }
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   if (name) updateData.name = name
   if (image) updateData.image = image
   updateData.updatedAt = new Date()

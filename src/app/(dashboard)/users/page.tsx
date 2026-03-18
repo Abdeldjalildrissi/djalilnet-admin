@@ -58,7 +58,7 @@ export default function UsersPage() {
     }
   })
 
-  const canManage = (session?.user as any)?.role === "super_admin"
+  const canManage = (session?.user as { role?: string })?.role === "super_admin"
 
   return (
     <div>

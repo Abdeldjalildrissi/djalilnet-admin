@@ -11,6 +11,8 @@ import {
   ArrowUpRight,
   Plus,
   Clock,
+  XCircle,
+  Send,
 } from "lucide-react"
 import { formatRelativeTime } from "@/lib/utils"
 import {
@@ -26,7 +28,7 @@ import {
 
 interface Stats {
   articles: { total: number; published: number; draft: number }
-  emails: { total: number }
+  emails: { total: number; sent: number; failed: number }
   users: { total: number }
   recentActivity: Array<{
     id: string
@@ -190,7 +192,7 @@ export default function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(6, 1fr)",
           gap: "1rem",
           marginBottom: "1.5rem",
         }}
@@ -198,29 +200,43 @@ export default function DashboardPage() {
         <StatCard
           icon={FileText}
           label="Total Articles"
-          value={isLoading ? "—" : data?.articles.total ?? 0}
-          sub={`${data?.articles.draft ?? 0} drafts`}
+          value={isLoading ? "—" : data?.articles?.total ?? 0}
+          sub={`${data?.articles?.draft ?? 0} drafts`}
           color="linear-gradient(135deg, #3b82f6, #6366f1)"
           href="/articles"
         />
         <StatCard
           icon={Eye}
           label="Published"
-          value={isLoading ? "—" : data?.articles.published ?? 0}
+          value={isLoading ? "—" : data?.articles?.published ?? 0}
           color="linear-gradient(135deg, #10b981, #059669)"
           href="/articles?status=published"
         />
         <StatCard
           icon={Mail}
           label="Emails Received"
-          value={isLoading ? "—" : data?.emails.total ?? 0}
+          value={isLoading ? "—" : data?.emails?.total ?? 0}
           color="linear-gradient(135deg, #f59e0b, #d97706)"
           href="/email/inbox"
         />
         <StatCard
+          icon={Send}
+          label="Emails Sent"
+          value={isLoading ? "—" : data?.emails?.sent ?? 0}
+          color="linear-gradient(135deg, #38bdf8, #0284c7)"
+          href="/email/sent"
+        />
+        <StatCard
+          icon={XCircle}
+          label="Failed Emails"
+          value={isLoading ? "—" : data?.emails?.failed ?? 0}
+          color="linear-gradient(135deg, #ef4444, #b91c1c)"
+          href="/email/sent?status=failed"
+        />
+        <StatCard
           icon={Users}
           label="Team Members"
-          value={isLoading ? "—" : data?.users.total ?? 0}
+          value={isLoading ? "—" : data?.users?.total ?? 0}
           color="linear-gradient(135deg, #8b5cf6, #7c3aed)"
           href="/users"
         />
@@ -323,12 +339,12 @@ export default function DashboardPage() {
               <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>
                 Loading...
               </div>
-            ) : data?.recentActivity.length === 0 ? (
+            ) : !data || !data.recentActivity || data.recentActivity.length === 0 ? (
               <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>
                 No activity yet
               </div>
             ) : (
-              data?.recentActivity.slice(0, 8).map((log) => (
+              data.recentActivity.slice(0, 8).map((log) => (
                 <div
                   key={log.id}
                   style={{

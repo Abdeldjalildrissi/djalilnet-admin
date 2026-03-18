@@ -97,12 +97,12 @@ export default function CategoriesPage() {
           <div style={{ gridColumn: "1/-1", padding: "3rem", textAlign: "center" }}>
             <Loader2 style={{ width: "24px", height: "24px", color: "#94a3b8", animation: "spin 1s linear infinite" }} />
           </div>
-        ) : data?.data.length === 0 ? (
+        ) : !data?.data || data.data.length === 0 ? (
           <div style={{ gridColumn: "1/-1", padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
             No categories yet. Create one to organize your articles.
           </div>
         ) : (
-          data?.data.map((cat) => (
+          data.data.map((cat) => (
             <div
               key={cat.id}
               style={{

@@ -79,7 +79,7 @@ export default function ArticlesPage() {
             Articles
           </h1>
           <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>
-            {data?.pagination.total ?? 0} total articles
+            {data?.pagination?.total ?? 0} total articles
           </p>
         </div>
         <Link
@@ -199,14 +199,14 @@ export default function ArticlesPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.data.length === 0 ? (
+              {!data?.data || data.data.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>
                     No articles found. <Link href="/articles/new" style={{ color: "#3b82f6" }}>Create your first article</Link>
                   </td>
                 </tr>
               ) : (
-                data?.data.map((article) => (
+                data.data.map((article) => (
                   <tr key={article.id}>
                     <td>
                       <div style={{ fontWeight: "500", color: "#0f172a", marginBottom: "0.125rem" }}>

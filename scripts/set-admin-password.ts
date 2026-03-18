@@ -1,10 +1,12 @@
 import { config } from "dotenv"
+import { randomUUID } from "node:crypto"
 config({ path: ".env.local" })
 
 import { db } from "../src/db"
-import { users } from "../src/db/schema"
-import { eq } from "drizzle-orm"
+import { users, accounts } from "../src/db/schema"
+import { eq, and } from "drizzle-orm"
 import { auth } from "../src/lib/auth"
+import { hashPassword } from "better-auth/crypto";
 
 async function setAdminPassword(email: string, newPassword: string) {
   console.log(`Setting password for ${email}...`)
@@ -28,12 +30,9 @@ async function setAdminPassword(email: string, newPassword: string) {
     // but better-auth's admin plugin would be needed.
     
     // Instead, let's just use the internal hasher from better-auth.
-    const { hashPassword } = require("better-auth/crypto");
     const hashedPassword = await hashPassword(newPassword);
 
     // Update or Insert the account
-    const { accounts } = require("../src/db/schema");
-    const { and } = require("drizzle-orm");
     
     const existingAccount = await db.query.accounts.findFirst({
         where: and(
@@ -51,6 +50,7 @@ async function setAdminPassword(email: string, newPassword: string) {
             .where(eq(accounts.id, existingAccount.id));
     } else {
         await db.insert(accounts).values({
+            id: randomUUID(),
             userId: user.id,
             accountId: user.email,
             providerId: "credential",

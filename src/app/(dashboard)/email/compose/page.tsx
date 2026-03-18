@@ -42,7 +42,7 @@ function ComposeInner() {
   const handleTemplateChange = (id: string) => {
     setTemplateId(id)
     if (!id) return
-    const template = templatesData?.data.find((t) => t.id === id)
+    const template = templatesData?.data?.find((t) => t.id === id)
     if (template) {
       setSubject(template.subject)
       setBodyHtml(template.bodyHtml)
@@ -167,7 +167,7 @@ function ComposeInner() {
             style={{ flex: 1, padding: "0.75rem 1rem 0.75rem 0", border: "none", fontSize: "0.875rem", outline: "none", background: "transparent" }}
           >
             <option value="">No template</option>
-            {templatesData?.data.map((t) => (
+            {templatesData?.data?.map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>

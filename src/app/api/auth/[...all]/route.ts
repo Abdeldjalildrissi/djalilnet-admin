@@ -1,9 +1,10 @@
 import { auth } from "@/lib/auth"
 import { toNextJsHandler } from "better-auth/next-js"
+import { NextRequest } from "next/server"
 
 const handlers = toNextJsHandler(auth)
 
-export const GET = async (req: any) => {
+export const GET = async (req: NextRequest) => {
   try {
     return await handlers.GET(req);
   } catch (err) {
@@ -12,7 +13,7 @@ export const GET = async (req: any) => {
   }
 }
 
-export const POST = async (req: any) => {
+export const POST = async (req: NextRequest) => {
   try {
     return await handlers.POST(req);
   } catch (err) {

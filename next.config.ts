@@ -1,7 +1,6 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   async headers() {
     const isProd = process.env.NODE_ENV === "production"
     return [
@@ -15,7 +14,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob: utfs.io",
-              "connect-src 'self' https://*.ingest.sentry.io https://uploadthing.com",
+              "connect-src 'self' https://*.ingest.sentry.io https://uploadthing.com https://*.uploadthing.com https://utfs.io https://*.utfs.io",
               "frame-ancestors 'none'",
             ].join("; "),
           },

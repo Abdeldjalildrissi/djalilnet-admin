@@ -5,12 +5,26 @@ import { eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth-helpers"
 import { logActivity } from "@/lib/activity-logger"
 import { sendEmailSchema } from "@/lib/validations/email"
-import { resend, FROM_EMAIL } from "@/lib/resend"
+import { FROM_EMAIL } from "@/lib/resend"
 import { mergeTemplateVariables, htmlToText } from "@/lib/utils"
+import { queue } from "@/lib/email-queue"
+import { Ratelimit } from "@upstash/ratelimit"
+import { Redis } from "@upstash/redis"
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "1 m"),
+})
 
 export async function POST(request: NextRequest) {
   const session = await requireAuth(request)
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
+  const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
+  const { success } = await ratelimit.limit(ip)
+  if (!success) {
+    return Response.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 })
+  }
 
   const role = (session.user as { role?: string }).role
   if (!["super_admin", "editor"].includes(role ?? "")) {
@@ -40,36 +54,30 @@ export async function POST(request: NextRequest) {
 
   const toArray = Array.isArray(to) ? to : [to]
 
-  const { data: resendData, error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: toArray,
-    cc: cc ?? [],
-    subject,
-    html: finalHtml,
-    text: htmlToText(finalHtml),
-  })
-
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
-  }
-
   const [sentEmail] = await db
     .insert(emails)
     .values({
       direction: "outbound",
-      fromAddress: "contact@djalilnet.com",
+      fromAddress: FROM_EMAIL,
       toAddress: toArray.join(", "),
       ccAddresses: cc?.join(", "),
       subject,
       bodyHtml: finalHtml,
       bodyText: htmlToText(finalHtml),
-      status: "sent",
-      resendId: resendData!.id,
-      sentAt: new Date(),
+      status: "draft", // Pending queue
       sentById: session.user.id,
       templateId: templateId ?? null,
     })
     .returning()
+
+  // Enqueue job
+  await queue.add("send", {
+    to: toArray,
+    cc: cc ?? [],
+    subject,
+    html: finalHtml,
+    emailId: sentEmail.id,
+  }, { priority: 1 })
 
   logActivity({
     userId: session.user.id,

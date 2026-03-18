@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/db"
-import { articles, users } from "@/db/schema"
-import { sql, isNotNull } from "drizzle-orm"
+import { articles, users, media } from "@/db/schema"
+import { sql, isNotNull, desc } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth-helpers"
 
 export async function GET(request: NextRequest) {
@@ -31,8 +31,20 @@ export async function GET(request: NextRequest) {
       .from(users)
       .where(isNotNull(users.avatarUrl))
 
+    // Fetch direct uploads from media table
+    const uploadedMedia = await db
+      .select({
+        url: media.url,
+        type: media.type,
+        title: media.name,
+        id: media.id
+      })
+      .from(media)
+      .orderBy(desc(media.createdAt))
+
     // Combine and format
     const allMedia = [
+      ...uploadedMedia,
       ...articleImages.map(img => ({ ...img, url: img.url! })),
       ...userImages.map(img => ({ ...img, url: img.url! }))
     ]

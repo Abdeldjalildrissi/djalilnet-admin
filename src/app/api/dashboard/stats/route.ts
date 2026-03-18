@@ -20,9 +20,12 @@ export async function GET(request: NextRequest) {
       .groupBy(articles.status),
 
     db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ 
+        status: emails.status,
+        count: sql<number>`count(*)::int` 
+      })
       .from(emails)
-      .where(eq(emails.direction, "inbound")),
+      .groupBy(emails.status),
 
     db.select({ count: sql<number>`count(*)::int` }).from(users),
 
@@ -67,13 +70,21 @@ export async function GET(request: NextRequest) {
     })
   )
 
+  const totalReceived = emailStats.find(s => s.status === "received")?.count ?? 0
+  const totalSent = emailStats.find(s => s.status === "sent")?.count ?? 0
+  const totalFailed = emailStats.find(s => s.status === "failed")?.count ?? 0
+
   return Response.json({
     articles: {
       total: totalArticles,
       published: publishedArticles,
       draft: draftArticles,
     },
-    emails: { total: emailStats[0]?.count ?? 0 },
+    emails: { 
+      total: totalReceived,
+      sent: totalSent,
+      failed: totalFailed
+    },
     users: { total: userStats[0]?.count ?? 0 },
     recentActivity,
     activityData,

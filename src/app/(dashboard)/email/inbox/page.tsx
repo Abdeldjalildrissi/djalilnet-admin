@@ -6,6 +6,7 @@ import { Search, Loader2, Star, Circle } from "lucide-react"
 import { cn, formatRelativeTime, formatDateTime } from "@/lib/utils"
 import type { Email } from "@/db/schema"
 import Link from "next/link"
+import DOMPurify from "isomorphic-dompurify"
 
 export default function InboxPage() {
   const [search, setSearch] = useState("")
@@ -180,7 +181,7 @@ export default function InboxPage() {
                 {selectedEmail.bodyHtml ? (
                   <div
                     style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155" }}
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.bodyHtml }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.bodyHtml) }}
                   />
                 ) : (
                   <pre style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155", whiteSpace: "pre-wrap" }}>

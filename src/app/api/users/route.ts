@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest) {
 
   if (!id) return Response.json({ error: "User ID required" }, { status: 400 })
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   if (role) updateData.role = role
   if (typeof isActive === "boolean") updateData.isActive = isActive
   updateData.updatedAt = new Date()

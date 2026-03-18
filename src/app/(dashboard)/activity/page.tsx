@@ -20,7 +20,7 @@ interface ActivityLog {
   action: string
   resourceType: string
   resourceId: string
-  metadata: any
+  metadata: Record<string, unknown>
   ipAddress: string
   createdAt: string
   user: {
@@ -151,9 +151,9 @@ export default function ActivityPage() {
                 <td style={{ padding: "0.875rem 1.25rem" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.75rem", color: "#64748b" }}>
                     <span>ID: {log.resourceId?.slice(0, 8) || "N/A"}</span>
-                    {log.metadata?.fields && (
+                    {log.metadata && (log.metadata as { fields?: string[] }).fields && (
                       <span style={{ color: "#94a3b8" }} title={JSON.stringify(log.metadata)}>
-                         ({(log.metadata.fields as string[]).join(", ")})
+                         ({((log.metadata as { fields?: string[] }).fields as string[]).join(", ")})
                       </span>
                     )}
                   </div>

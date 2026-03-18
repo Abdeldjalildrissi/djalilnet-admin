@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/db"
 import { emails } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -39,6 +40,27 @@ export async function POST(request: NextRequest) {
       resendId: event.data.email_id,
       receivedAt: new Date(event.data.created_at ?? Date.now()),
     })
+  }
+
+  if (event.type === "email.opened") {
+    await db.update(emails)
+      .set({ openedAt: new Date() })
+      .where(eq(emails.resendId, event.data.email_id))
+  }
+
+  if (event.type === "email.clicked") {
+    await db.update(emails)
+      .set({ clickedAt: new Date() })
+      .where(eq(emails.resendId, event.data.email_id))
+  }
+
+  if (event.type === "email.bounced" || event.type === "email.delivery_delayed") {
+    await db.update(emails)
+      .set({ 
+        status: event.type === "email.bounced" ? "bounced" : "failed",
+        failureReason: "Delivery bounced or delayed upstream.",
+      })
+      .where(eq(emails.resendId, event.data.email_id))
   }
 
   return Response.json({ received: true })

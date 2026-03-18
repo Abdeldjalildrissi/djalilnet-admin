@@ -204,7 +204,7 @@ export default function NewArticlePage() {
               style={{ ...inputStyle, background: "white" }}
             >
               <option value="">No category</option>
-              {categoriesData?.data.map((cat) => (
+              {categoriesData?.data?.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>

@@ -126,7 +126,7 @@ export default function TemplatesPage() {
           <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
             <Loader2 style={{ width: "20px", height: "20px", animation: "spin 1s linear infinite" }} />
           </div>
-        ) : data?.data.length === 0 ? (
+        ) : !data?.data || data.data.length === 0 ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
             No templates yet. Create your first template to speed up email sending.
           </div>
@@ -141,7 +141,7 @@ export default function TemplatesPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.data.map((template) => (
+              {data?.data?.map((template) => (
                 <tr key={template.id}>
                   <td style={{ fontWeight: "500", color: "#0f172a" }}>{template.name}</td>
                   <td style={{ color: "#64748b" }}>{template.subject}</td>

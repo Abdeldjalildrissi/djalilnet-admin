@@ -13,6 +13,9 @@ import {
   Check
 } from "lucide-react"
 import { useState } from "react"
+import { UploadButton } from "@/lib/uploadthing"
+import { useQueryClient } from "@tanstack/react-query"
+import { useToast } from "@/hooks/use-toast"
 
 interface MediaItem {
   url: string
@@ -24,6 +27,8 @@ interface MediaItem {
 export default function MediaPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const { data: media, isLoading } = useQuery<MediaItem[]>({
     queryKey: ["media-items"],
@@ -52,18 +57,38 @@ export default function MediaPage() {
           <h1 style={{ fontSize: "1.375rem", fontWeight: "700", margin: "0 0 0.25rem" }}>Media Library</h1>
           <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>Manage assets across the entire platform</p>
         </div>
-        <button 
-          disabled
-          style={{ 
-            display: "flex", alignItems: "center", gap: "0.5rem", 
-            padding: "0.5rem 1rem", background: "#f1f5f9", 
-            color: "#64748b", borderRadius: "0.5rem", fontSize: "0.875rem", 
-            fontWeight: "500", border: "1px solid #e2e8f0", cursor: "not-allowed"
+        <UploadButton
+          endpoint="imageUploader"
+          onClientUploadComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ["media-items"] })
+            toast({
+              title: "Upload Complete",
+              description: "New media added to library",
+            })
           }}
-        >
-          <Upload style={{ width: "16px", height: "16px" }} />
-          Upload New
-        </button>
+          onUploadError={(error: Error) => {
+            toast({
+              variant: "destructive",
+              title: "Upload Failed",
+              description: error.message,
+            })
+          }}
+          appearance={{
+            button: {
+              background: "var(--primary)",
+              color: "white",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              borderRadius: "0.5rem",
+              padding: "0.5rem 1rem",
+              height: "auto",
+              width: "auto"
+            },
+            allowedContent: {
+              display: "none"
+            }
+          }}
+        />
       </div>
 
       <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "0.75rem", padding: "1rem", marginBottom: "1.5rem" }}>

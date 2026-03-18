@@ -4,7 +4,7 @@
   :root {
     /* Sidebar */
     --sidebar-bg: #0f172a;
-    --sidebar-text: #94a3b8;
+    --sidebar-text: #e2e8f0;
     --sidebar-active: #3b82f6;
     --sidebar-active-bg: rgba(59, 130, 246, 0.1);
     --sidebar-border: #1e293b;
@@ -19,14 +19,14 @@
     /* Brand */
     --primary: #3b82f6;
     --primary-hover: #2563eb;
-    --success: #10b981;
+    --success: #059669;
     --warning: #f59e0b;
     --danger: #ef4444;
 
     /* Text */
     --heading: #0f172a;
     --body: #334155;
-    --muted: #94a3b8;
+    --muted: #374151;
   }
 
   * {
@@ -221,7 +221,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #475569;
+  color: #94a3b8;
   padding: 0 0.875rem;
   margin: 0.25rem 0;
 }
@@ -250,7 +250,7 @@
   text-align: left;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border);
@@ -280,7 +280,7 @@
   font-weight: 500;
 }
 
-.badge-draft      { background: #f1f5f9; color: #64748b; }
+.badge-draft      { background: #f1f5f9; color: #475569; }
 .badge-published  { background: #dcfce7; color: #16a34a; }
 .badge-archived   { background: #fef3c7; color: #d97706; }
 .badge-sent       { background: #dbeafe; color: #2563eb; }

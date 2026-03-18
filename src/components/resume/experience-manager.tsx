@@ -264,109 +264,114 @@ export function ExperienceManager() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-lg border-white/20 max-h-[90vh] overflow-y-auto">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Acme Inc." {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Senior Developer" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="period"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Period</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Jan 2020 – Present" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="New York, NY" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <DialogHeader>
+            <DialogTitle>{editingExp ? "Edit Experience" : "Add Experience"}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Acme Inc." {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Senior Developer" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="period"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Period</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jan 2020 – Present" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="New York, NY" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="current"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white/50">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Current Role</FormLabel>
-                    <FormDescription>
-                      Mark this if you are currently working in this position.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <FormLabel>Bullets (One per line)</FormLabel>
-              <Textarea
-                placeholder="- Managed a team of 10 developers\n- Improved performance by 30%"
-                className="min-h-[120px] resize-none"
-                value={form.getValues("bullets")?.join("\n") || ""}
-                onChange={(e) => {
-                  const bullets = e.target.value.split("\n").filter(line => line.trim() !== "")
-                  form.setValue("bullets", bullets)
-                }}
+              <FormField
+                control={form.control}
+                name="current"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white/50">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Current Role</FormLabel>
+                      <FormDescription>
+                        Mark this if you are currently working in this position.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
               />
-              <FormDescription>
-                List your key responsibilities and achievements.
-              </FormDescription>
-            </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {editingExp ? "Update" : "Create"}
-              </Button>
-            </div>
-          </form>
+              <div className="space-y-2">
+                <FormLabel>Bullets (One per line)</FormLabel>
+                <Textarea
+                  placeholder="- Managed a team of 10 developers\n- Improved performance by 30%"
+                  className="min-h-[120px] resize-none"
+                  value={form.getValues("bullets")?.join("\n") || ""}
+                  onChange={(e) => {
+                    const bullets = e.target.value.split("\n").filter(line => line.trim() !== "")
+                    form.setValue("bullets", bullets)
+                  }}
+                />
+                <FormDescription>
+                  List your key responsibilities and achievements.
+                </FormDescription>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {editingExp ? "Update" : "Create"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

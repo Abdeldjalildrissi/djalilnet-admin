@@ -65,7 +65,7 @@ export default function SettingsPage() {
       setPassError("")
       setTimeout(() => setPassSuccess(false), 5000)
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setPassError(error.message)
     }
   })
@@ -239,7 +239,7 @@ export default function SettingsPage() {
             <h3 style={{ fontSize: "0.875rem", fontWeight: "600", color: "#475569", margin: 0 }}>Role & Permissions</h3>
           </div>
           <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: 0, lineHeight: "1.5" }}>
-            Your account is assigned the <strong style={{color: "#0f172a"}}>{(user as any)?.role ?? "Author"}</strong> role. 
+            Your account is assigned the <strong style={{color: "#0f172a"}}>{(user as { role?: string })?.role ?? "Author"}</strong> role. 
             Permissions are managed by platform administrators. Contact your system admin to request role changes.
           </p>
         </section>

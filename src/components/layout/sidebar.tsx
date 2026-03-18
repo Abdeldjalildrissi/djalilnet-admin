@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import {
@@ -53,6 +53,7 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/"
@@ -136,7 +137,15 @@ export function Sidebar() {
         }}
       >
         <button
-          onClick={() => signOut()}
+          onClick={async () => {
+            await signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  router.push("/login")
+                },
+              },
+            })
+          }}
           className="nav-item"
           style={{ color: "#ef4444" }}
         >

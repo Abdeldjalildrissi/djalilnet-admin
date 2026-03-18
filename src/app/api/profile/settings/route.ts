@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const settings = data.reduce((acc, curr) => {
       acc[curr.key] = curr.value
       return acc
-    }, {} as Record<string, any>)
+    }, {} as Record<string, unknown>)
     
     return NextResponse.json(settings)
   } catch (error) {
