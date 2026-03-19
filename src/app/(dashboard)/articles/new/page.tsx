@@ -124,12 +124,7 @@ export default function NewArticlePage() {
       if (res.ok) {
         const data = await res.json()
         router.push(`/articles/${data.data.id}`)
-      } else {
-        const errorData = await res.json()
-        toast({ variant: "destructive", title: "Error saving article", description: JSON.stringify(errorData.error || "Unknown error") })
       }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Network Error", description: err.message })
     } finally {
       loading(false)
     }
@@ -226,7 +221,7 @@ export default function NewArticlePage() {
       )}
 
       {/* Editor + Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "1rem", alignItems: "start" }}>
 
         {/* Left: Title + Editor */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

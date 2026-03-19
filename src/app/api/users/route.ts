@@ -3,13 +3,6 @@ import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { requireRole } from "@/lib/auth-helpers"
-import { z } from "zod"
-
-const updateUserSchema = z.object({
-  id: z.string().uuid(),
-  role: z.enum(["super_admin", "editor", "author"]).optional(),
-  isActive: z.boolean().optional(),
-})
 
 export async function GET(request: NextRequest) {
   // Only super_admin and editor can list users
@@ -26,11 +19,10 @@ export async function PATCH(request: NextRequest) {
   const session = await requireRole(request, ["super_admin"])
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-  const parsed = updateUserSchema.safeParse(await request.json())
-  if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 422 })
-  }
-  const { id, role, isActive } = parsed.data
+  const body = await request.json()
+  const { id, role, isActive } = body
+
+  if (!id) return Response.json({ error: "User ID required" }, { status: 400 })
 
   const updateData: Record<string, unknown> = {}
   if (role) updateData.role = role

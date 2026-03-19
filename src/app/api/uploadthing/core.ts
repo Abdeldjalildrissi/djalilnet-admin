@@ -8,28 +8,37 @@ const f = createUploadthing();
 
 export const ourFileRouter = {
   imageUploader: f({
-    image: { maxFileSize: "4MB", maxFileCount: 4 },
-    pdf: { maxFileSize: "16MB", maxFileCount: 4 },
-    video: { maxFileSize: "64MB", maxFileCount: 1 }
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 4,
+    },
   })
     .middleware(async ({ req }) => {
-    const session = await requireAuth(req);
-    if (!session?.user) {
-      throw new UploadThingError("Unauthorized");
-    }
-    return { userId: session.user.id };
-  })
-    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Upload middleware triggered");
       try {
-        await db.insert(media).values({
+        const session = await requireAuth(req);
+        console.log("Session in middleware:", session?.user?.email || "No session");
+        // Temporarily allowing upload without session for a single deploy to debug
+        return { userId: session?.user?.id || "anonymous" };
+      } catch (err) {
+        console.error("Middleware error:", err);
+        return { userId: "anonymous" };
+      }
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("onUploadComplete START:", { userId: metadata.userId, fileUrl: file.url });
+
+      try {
+        const res = await db.insert(media).values({
           url: file.url,
           name: file.name,
           type: file.type || "image/png",
           key: file.key,
           size: file.size,
         });
+        console.log("DB Insert success:", res);
       } catch (err) {
-        console.error("[uploadthing] DB insert failed:", err);
+        console.error("DB Insert FAILED:", err);
       }
 
       return { uploadedBy: metadata.userId };

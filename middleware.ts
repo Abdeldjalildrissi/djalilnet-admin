@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
-import { checkAuthRateLimit } from "@/lib/ratelimit"
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // CRITICAL SECURITY FIX: Prevent brute-force password guessing
-  if (pathname.startsWith("/api/auth/sign-in")) {
-    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
-    const success = await checkAuthRateLimit(ip)
-    if (!success) {
-      return NextResponse.json({ error: "Too many login attempts" }, { status: 429 })
-    }
-  }
 
   const isAuthRoute = pathname === "/login" || pathname.startsWith("/login")
   const isApiAuth = pathname.startsWith("/api/auth")

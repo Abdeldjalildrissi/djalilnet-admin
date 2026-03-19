@@ -132,14 +132,9 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
 
   const handleDelete = async () => {
     if (!confirm("Delete this article permanently?")) return
-    try {
-      const res = await fetch(`/api/articles/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete article")
-      router.push("/articles")
-      toast({ title: "Deleted", description: "Article has been removed." })
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message })
-    }
+    await fetch(`/api/articles/${id}`, { method: "DELETE" })
+    router.push("/articles")
+    toast({ title: "Deleted", description: "Article has been removed." })
   }
 
   if (isArticleLoading) return <div style={{ padding: "2rem", color: "#94a3b8" }}>Loading...</div>
@@ -201,7 +196,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "1rem", alignItems: "start" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <input
             type="text"

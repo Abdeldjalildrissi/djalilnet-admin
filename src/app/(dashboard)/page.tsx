@@ -145,7 +145,6 @@ export default function DashboardPage() {
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const res = await fetch("/api/dashboard/stats")
-      if (!res.ok) throw new Error("Failed to load dashboard stats")
       return res.json()
     },
   })
@@ -153,7 +152,14 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Page header */}
-      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-6">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "1.5rem",
+        }}
+      >
         <div>
           <h1 style={{ fontSize: "1.375rem", fontWeight: "700", margin: "0 0 0.25rem" }}>
             Dashboard
@@ -183,7 +189,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(6, 1fr)",
+          gap: "1rem",
+          marginBottom: "1.5rem",
+        }}
+      >
         <StatCard
           icon={FileText}
           label="Total Articles"
@@ -296,7 +309,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
 
         {/* Recent Activity */}
         <div

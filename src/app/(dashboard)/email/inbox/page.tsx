@@ -6,7 +6,6 @@ import { Search, Loader2, Star, Circle } from "lucide-react"
 import { cn, formatRelativeTime, formatDateTime } from "@/lib/utils"
 import type { Email } from "@/db/schema"
 import Link from "next/link"
-import DOMPurify from "isomorphic-dompurify"
 
 export default function InboxPage() {
   const [search, setSearch] = useState("")
@@ -23,16 +22,13 @@ export default function InboxPage() {
         filter,
       })
       const res = await fetch(`/api/emails?${params}`)
-      if (!res.ok) throw new Error("Failed to fetch emails")
       return res.json()
     },
   })
 
   const markReadMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/emails/${id}/read`, { method: "PATCH" })
-      if (!res.ok) throw new Error("Failed to mark email as read")
-    },
+    mutationFn: (id: string) =>
+      fetch(`/api/emails/${id}/read`, { method: "PATCH" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["emails"] }),
   })
 
@@ -184,7 +180,7 @@ export default function InboxPage() {
                 {selectedEmail.bodyHtml ? (
                   <div
                     style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155" }}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.bodyHtml ?? "") }}
+                    dangerouslySetInnerHTML={{ __html: selectedEmail.bodyHtml }}
                   />
                 ) : (
                   <pre style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155", whiteSpace: "pre-wrap" }}>

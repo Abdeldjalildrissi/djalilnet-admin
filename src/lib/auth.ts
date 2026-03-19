@@ -13,6 +13,9 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
+  trustedOrigins: ["http://localhost:3001",
+    "https://admin.djalilnet.com",
+    "https://djalilnet-admin-39cplni26-abdeldjalildrissi-6291s-projects.vercel.app"],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,

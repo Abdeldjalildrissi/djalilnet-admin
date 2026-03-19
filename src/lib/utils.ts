@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNow, format } from "date-fns"
-import DOMPurify from "isomorphic-dompurify"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -63,18 +62,12 @@ export function truncate(str: string, length: number): string {
 
 export function sanitize(html: string): string {
   if (!html) return ""
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "p", "br", "strong", "em", "u", "s", "strike",
-      "h1", "h2", "h3", "h4", "h5", "h6",
-      "ul", "ol", "li", "blockquote", "code", "pre",
-      "a", "img", "figure", "figcaption",
-      "table", "thead", "tbody", "tr", "th", "td",
-      "hr", "span", "div",
-    ],
-    ALLOWED_ATTR: ["href", "src", "alt", "class", "target", "rel", "title", "width", "height"],
-    ALLOW_DATA_ATTR: false,
-  })
+  // Basic sanitization: allow common formatting tags, strip scripts/onAttributes
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/on\w+="[^"]*"/gi, "")
+    .replace(/on\w+='[^']*'/gi, "")
+    .replace(/javascript:[^"']*/gi, "")
 }
 
 export function computeReadingTime(html: string): number {

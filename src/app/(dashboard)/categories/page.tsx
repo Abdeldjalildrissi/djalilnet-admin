@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus, Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
 
 interface Category { id: string; name: string; slug: string; description: string | null; color: string | null }
 
@@ -14,35 +13,22 @@ export default function CategoriesPage() {
   const [description, setDescription] = useState("")
   const [color, setColor] = useState("#3B82F6")
   const [isSaving, setIsSaving] = useState(false)
-  const { toast } = useToast()
 
   const { data, isLoading } = useQuery<{ data: Category[] }>({
     queryKey: ["categories"],
-    queryFn: async () => {
-      const r = await fetch("/api/categories")
-      if (!r.ok) throw new Error("Failed to fetch categories")
-      return r.json()
-    },
+    queryFn: () => fetch("/api/categories").then((r) => r.json()),
   })
 
   const handleCreate = async () => {
     setIsSaving(true)
     try {
-      const res = await fetch("/api/categories", {
+      await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, description, color }),
       })
-      if (!res.ok) {
-        let msg = "Failed to create category"
-        try { const errData = await res.json(); msg = errData.error || msg } catch(e){}
-        throw new Error(msg)
-      }
       queryClient.invalidateQueries({ queryKey: ["categories"] })
       setShowForm(false); setName(""); setDescription(""); setColor("#3B82F6")
-      toast({ title: "Success", description: "Category created successfully." })
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message })
     } finally { setIsSaving(false) }
   }
 
@@ -76,7 +62,7 @@ export default function CategoriesPage() {
       {showForm && (
         <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1rem" }}>
           <h3 style={{ fontSize: "0.9375rem", fontWeight: "600", margin: "0 0 1rem" }}>New Category</h3>
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "0.75rem", alignItems: "end" }}>
             <div>
               <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: "500", color: "#374151", marginBottom: "0.375rem" }}>Name *</label>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Category name" style={inputStyle} />

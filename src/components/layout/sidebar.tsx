@@ -51,7 +51,7 @@ const navigation = [
   },
 ]
 
-export function Sidebar({ isOpen }: { isOpen?: boolean }) {
+export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -61,7 +61,7 @@ export function Sidebar({ isOpen }: { isOpen?: boolean }) {
   }
 
   return (
-    <aside className={cn("admin-sidebar", isOpen && "open")}>
+    <aside className="admin-sidebar">
       {/* Logo */}
       <div
         style={{
