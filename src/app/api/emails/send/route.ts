@@ -16,11 +16,20 @@ export const dynamic = "force-dynamic"
 let ratelimit: Ratelimit | null = null
 
 function getRatelimit() {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  
   if (!ratelimit) {
-    ratelimit = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(10, "1 m"),
-    })
+    try {
+      ratelimit = new Ratelimit({
+        redis: Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(10, "1 m"),
+      })
+    } catch (e) {
+      console.warn("Failed to initialize ratelimit:", e)
+      return null
+    }
   }
   return ratelimit
 }
@@ -30,9 +39,12 @@ export async function POST(request: NextRequest) {
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
-  const { success } = await getRatelimit().limit(ip)
-  if (!success) {
-    return Response.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 })
+  const rl = getRatelimit()
+  if (rl) {
+    const { success } = await rl.limit(ip)
+    if (!success) {
+      return Response.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 })
+    }
   }
 
   const role = (session.user as { role?: string }).role
