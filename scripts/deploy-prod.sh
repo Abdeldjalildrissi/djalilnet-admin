@@ -10,9 +10,10 @@ source .env.production
 set_vercel_env() {
   local key=$1
   local value=$2
-  echo "Setting $key on Vercel (Production)..."
-  # Yes to skip confirmation
-  echo "$value" | npx vercel env add "$key" production --yes || (echo "$value" | npx vercel env rm "$key" production --yes && echo "$value" | npx vercel env add "$key" production --yes)
+  echo "Updating $key on Vercel (Production)..."
+  # Support both adding and updating by removing first
+  npx vercel env rm "$key" production --yes || true
+  echo "$value" | npx vercel env add "$key" production --yes
 }
 
 set_vercel_env "DATABASE_URL" "$DATABASE_URL"

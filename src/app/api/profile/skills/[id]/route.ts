@@ -12,9 +12,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const body = await request.json()
+    
+    // Explicitly mapping allowed fields only
+    const { name, level, category, order } = body
+    
     const [updated] = await db.update(skills)
       .set({
-        ...body,
+        name,
+        level,
+        category,
+        order,
       })
       .where(eq(skills.id, id))
       .returning()

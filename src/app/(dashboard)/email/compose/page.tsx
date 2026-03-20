@@ -115,9 +115,9 @@ function ComposeInner() {
             display: "flex", alignItems: "center", gap: "0.375rem",
             padding: "0.5rem 1.25rem", border: "none",
             borderRadius: "0.5rem",
-            background: isSending || !to || !subject ? "#94a3b8" : "linear-gradient(135deg, #3b82f6, #6366f1)",
+            background: isSending || !to || !subject || !bodyHtml ? "#94a3b8" : "linear-gradient(135deg, #3b82f6, #6366f1)",
             color: "white", fontSize: "0.875rem", fontWeight: "500",
-            cursor: isSending || !to || !subject ? "not-allowed" : "pointer",
+            cursor: isSending || !to || !subject || !bodyHtml ? "not-allowed" : "pointer",
           }}
         >
           {isSending ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : <Send style={{ width: "14px", height: "14px" }} />}

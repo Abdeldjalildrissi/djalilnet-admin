@@ -16,13 +16,14 @@ export const createArticleSchema = z.object({
     .min(3)
     .max(255)
     .regex(/^[a-z0-9-]+$/, "Slug must only contain lowercase letters, numbers, and hyphens")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   content: z.record(z.string(), z.unknown()).optional(),
-  contentHtml: z.string().min(1, "Content is required").optional(),
-  excerpt: z.string().max(500, "Excerpt is too long").optional(),
-  coverImage: z.string().url("Invalid cover image URL").nullable().optional(),
+  contentHtml: z.string().min(1, "Content is required").optional().or(z.literal("")),
+  excerpt: z.string().max(500, "Excerpt is too long").optional().nullable().or(z.literal("")),
+  coverImage: z.string().nullable().optional().or(z.literal("")),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
-  categoryId: z.string().uuid("Invalid category ID").optional().nullable(),
+  categoryId: z.string().uuid("Invalid category ID").optional().nullable().or(z.literal("")),
   tags: z.array(z.string().max(50)).max(20, "Too many tags").default([]),
 })
 

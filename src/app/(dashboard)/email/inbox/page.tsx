@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Search, Loader2, Star, Circle } from "lucide-react"
-import { cn, formatRelativeTime, formatDateTime } from "@/lib/utils"
+import { cn, formatRelativeTime, formatDateTime, sanitize } from "@/lib/utils"
 import type { Email } from "@/db/schema"
 import Link from "next/link"
 
@@ -126,10 +126,11 @@ export default function InboxPage() {
                   style={{
                     width: "100%", textAlign: "left",
                     padding: "0.875rem 1rem",
+                    borderTop: "none",
+                    borderRight: "none",
                     borderBottom: "1px solid #f8fafc",
                     borderLeft: selectedEmail?.id === email.id ? "3px solid #3b82f6" : "3px solid transparent",
                     background: selectedEmail?.id === email.id ? "#eff6ff" : !email.isRead ? "white" : "#fafafa",
-                    border: "none",
                     cursor: "pointer",
                   }}
                 >
@@ -180,7 +181,7 @@ export default function InboxPage() {
                 {selectedEmail.bodyHtml ? (
                   <div
                     style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155" }}
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.bodyHtml }}
+                    dangerouslySetInnerHTML={{ __html: sanitize(selectedEmail.bodyHtml) }}
                   />
                 ) : (
                   <pre style={{ fontSize: "0.875rem", lineHeight: "1.75", color: "#334155", whiteSpace: "pre-wrap" }}>

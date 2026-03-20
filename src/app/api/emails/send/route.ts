@@ -36,9 +36,13 @@ function getRatelimit() {
 
 export async function POST(request: NextRequest) {
   const session = await requireAuth(request)
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 })
+  
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1"
+
   const rl = getRatelimit()
   if (rl) {
     const { success } = await rl.limit(ip)
@@ -117,32 +121,40 @@ export async function POST(request: NextRequest) {
 
     if (error) throw new Error(error.message)
 
-    await db.update(emails)
+    const [updatedEmail] = await db.update(emails)
       .set({ status: "sent", resendId: data!.id, sentAt: new Date() })
       .where(eq(emails.id, sentEmail.id))
+      .returning()
 
     await db.update(emailQueue)
       .set({ status: "completed", processedAt: new Date() })
       .where(eq(emailQueue.id, queueItem.id))
 
+    logActivity({
+      userId: session.user.id,
+      action: "email.send",
+      resourceId: updatedEmail.id,
+      resourceType: "email",
+      metadata: { to, subject },
+    })
+
+    return Response.json({ data: updatedEmail }, { status: 201 })
+
   } catch (err: any) {
     console.error("[SendAPI] Immediate send failed, item remains pending in queue:", err)
-    await db.update(emails)
+    
+    const [failedEmail] = await db.update(emails)
       .set({ status: "failed", failureReason: err.message })
       .where(eq(emails.id, sentEmail.id))
+      .returning()
     
     await db.update(emailQueue)
       .set({ status: "failed", error: err.message })
       .where(eq(emailQueue.id, queueItem.id))
+
+    return Response.json({ 
+      error: err.message || "Failed to send email",
+      data: failedEmail 
+    }, { status: 500 })
   }
-
-  logActivity({
-    userId: session.user.id,
-    action: "email.send",
-    resourceId: sentEmail.id,
-    resourceType: "email",
-    metadata: { to, subject },
-  })
-
-  return Response.json({ data: sentEmail }, { status: 201 })
 }

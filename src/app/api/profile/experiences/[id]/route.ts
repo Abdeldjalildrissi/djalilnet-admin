@@ -25,9 +25,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const body = await request.json()
+    
+    // Explicitly mapping allowed fields only
+    const { company, role, period, location, current, bullets, order } = body
+    
     const [updated] = await db.update(experiences)
       .set({
-        ...body,
+        company,
+        role,
+        period,
+        location,
+        current,
+        bullets,
+        order,
         updatedAt: new Date(),
       })
       .where(eq(experiences.id, id))

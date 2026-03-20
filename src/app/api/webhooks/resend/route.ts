@@ -3,6 +3,7 @@ import { Webhook } from "svix"
 import { db } from "@/db"
 import { emails } from "@/db/schema"
 import { eq } from "drizzle-orm"
+import { sanitize } from "@/lib/utils"
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
         toAddress: Array.isArray(data.to) ? data.to[0] : data.to,
         subject: data.subject ?? "(no subject)",
         bodyText: data.text ?? "",
-        bodyHtml: data.html ?? "",
+        bodyHtml: data.html ? sanitize(data.html) : "",
         status: "received",
         resendId: data.email_id,
         receivedAt: new Date(data.created_at),

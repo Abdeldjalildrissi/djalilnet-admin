@@ -7,7 +7,11 @@ import { resend, FROM_EMAIL } from "@/lib/resend"
 export const dynamic = "force-dynamic"
 
 export async function GET(req: NextRequest) {
-  // Simple protection with a CRON_SECRET if desired, but here we prioritize restoration
+  const authHeader = req.headers.get("authorization")
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+  
   try {
     // Process one batch of pending queue items
     const pending = await db

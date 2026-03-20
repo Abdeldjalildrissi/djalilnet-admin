@@ -32,6 +32,9 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        // Disabling these here because they are included in some StarterKit bundles,
+        // and we want to configure them manually below to avoid duplicate warnings.
+        codeBlock: false,
       }),
 
       Underline,
