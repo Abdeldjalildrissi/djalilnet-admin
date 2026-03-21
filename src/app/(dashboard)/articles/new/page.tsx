@@ -4,6 +4,7 @@ import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { RichTextEditor } from "@/components/editor/rich-text-editor"
+import { MarkdownEditor } from "@/components/editor/markdown-editor"
 import { slugify } from "@/lib/utils"
 import { ArrowLeft, Save, Globe, Loader2, Cloud, FolderOpen } from "lucide-react"
 import Link from "next/link"
@@ -39,8 +40,9 @@ export default function NewArticlePage() {
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
   const [categoryId, setCategoryId] = useState("")
-  const [content, setContent] = useState<JSONContent | null>(null)
+  const [content, setContent] = useState<any>(null)
   const [contentHtml, setContentHtml] = useState("")
+  const [editorMode, setEditorMode] = useState<"markdown" | "richtext">("markdown")
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null)
@@ -59,8 +61,8 @@ export default function NewArticlePage() {
     }
   }
 
-  const handleEditorChange = useCallback((json: JSONContent, html: string) => {
-    setContent(json)
+  const handleEditorChange = useCallback((newContent: any, html: string) => {
+    setContent(newContent)
     setContentHtml(html)
   }, [])
 
@@ -243,10 +245,33 @@ export default function NewArticlePage() {
               boxSizing: "border-box",
             }}
           />
-          <RichTextEditor
-            onChange={handleEditorChange}
-            placeholder="Start writing your article..."
-          />
+          <div style={{ display: "flex", gap: "1.5rem", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.25rem" }}>
+            <button 
+              onClick={() => setEditorMode("markdown")}
+              style={{ background: "none", border: "none", fontSize: "0.875rem", fontWeight: editorMode === "markdown" ? "600" : "400", color: editorMode === "markdown" ? "#0f172a" : "#64748b", cursor: "pointer", borderBottom: editorMode === "markdown" ? "2px solid #3b82f6" : "2px solid transparent", paddingBottom: "0.5rem" }}
+            >
+              Markdown Editor
+            </button>
+            <button 
+              onClick={() => setEditorMode("richtext")}
+              style={{ background: "none", border: "none", fontSize: "0.875rem", fontWeight: editorMode === "richtext" ? "600" : "400", color: editorMode === "richtext" ? "#0f172a" : "#64748b", cursor: "pointer", borderBottom: editorMode === "richtext" ? "2px solid #3b82f6" : "2px solid transparent", paddingBottom: "0.5rem" }}
+            >
+              Rich Text (Legacy)
+            </button>
+          </div>
+          {editorMode === "markdown" ? (
+            <MarkdownEditor
+              content={content}
+              onChange={handleEditorChange}
+              placeholder="Write your markdown here..."
+            />
+          ) : (
+            <RichTextEditor
+              content={content}
+              onChange={handleEditorChange}
+              placeholder="Start writing your article..."
+            />
+          )}
         </div>
 
         {/* Right: Metadata sidebar */}

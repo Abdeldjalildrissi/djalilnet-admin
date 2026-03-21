@@ -1,7 +1,7 @@
 "use client"
 
 import type { Editor } from "@tiptap/react"
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Code2, Link, Undo, Redo, Minus, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Code2, Link, Undo, Redo, Minus, AlignLeft, AlignCenter, AlignRight, ImagePlus, Loader2 } from "lucide-react"
 import { UploadButton } from "@/lib/uploadthing"
 
 interface EditorToolbarProps {
@@ -158,10 +158,10 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
-        gap: "2px",
-        padding: "8px 12px",
-        borderBottom: "1px solid #e2e8f0",
-        background: "#f8fafc",
+        gap: "4px",
+        padding: "10px 16px",
+        borderBottom: "1px solid #f1f5f9",
+        background: "white",
       }}
     >
       {tools.map((tool, i) => {
@@ -187,18 +187,18 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
             disabled={tool.disabled}
             title={tool.title}
             style={{
-              width: "32px",
-              height: "32px",
+              width: "34px",
+              height: "34px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: "6px",
+              borderRadius: "8px",
               border: "none",
               cursor: tool.disabled ? "not-allowed" : "pointer",
-              background: tool.isActive ? "#dbeafe" : "transparent",
-              color: tool.isActive ? "#2563eb" : "#64748b",
-              opacity: tool.disabled ? 0.4 : 1,
-              transition: "all 0.1s",
+              background: tool.isActive ? "#f0f0ff" : "transparent",
+              color: tool.isActive ? "#6366f1" : "#64748b",
+              opacity: tool.disabled ? 0.3 : 1,
+              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onMouseEnter={(e) => {
               if (!tool.disabled && !tool.isActive) {
@@ -235,10 +235,36 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
               }
             })
           }}
-          className="ut-button:h-8 ut-button:px-3 ut-button:text-xs ut-button:bg-[#eff6ff] ut-button:text-[#2563eb] ut-button:border-[#bfdbfe] ut-button:font-medium ut-button:rounded-md ut-button:border hover:ut-button:bg-[#dbeafe] ut-allowed-content:hidden"
+          appearance={{
+            button: {
+              height: "36px",
+              padding: "0 16px",
+              background: "linear-gradient(to right, #6366f1, #3b82f6)",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "600",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            },
+            allowedContent: { display: "none" }
+          }}
           content={{
-            button({ ready }) {
-              return ready ? "Insert Media" : "..."
+            button({ ready, isUploading }) {
+              if (isUploading) return (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Loader2 className="animate-spin" style={{ width: "16px", height: "16px" }} />
+                  <span>Uploading...</span>
+                </div>
+              );
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <ImagePlus style={{ width: "16px", height: "16px" }} />
+                  <span>{ready ? "Insert Media" : "..."}</span>
+                </div>
+              );
             }
           }}
         />

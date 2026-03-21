@@ -277,10 +277,35 @@ function ComposeInner() {
               onClientUploadComplete={(res) => {
                 setAttachments(prev => [...prev, ...res.map(f => ({ filename: f.name, url: f.url, size: f.size }))])
               }}
-              className="ut-button:h-8 ut-button:px-3 ut-button:text-xs ut-button:bg-slate-100 ut-button:text-slate-600 ut-button:border-slate-200 ut-button:hover:bg-slate-200 ut-allowed-content:hidden"
+              appearance={{
+                button: {
+                  height: "32px",
+                  padding: "0 14px",
+                  background: "#e0e7ff",
+                  color: "#4338ca",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  borderRadius: "9999px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                },
+                allowedContent: { display: "none" }
+              }}
               content={{
-                button({ ready }) {
-                  return <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><Paperclip style={{ width: "12px" }}/> {ready ? "Attach" : "..."}</div>
+                button({ ready, isUploading }) {
+                  if (isUploading) return (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <Loader2 className="animate-spin" style={{ width: "12px" }} />
+                      <span>...</span>
+                    </div>
+                  );
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Paperclip style={{ width: "14px" }} />
+                      <span>{ready ? "Attach File" : "..."}</span>
+                    </div>
+                  );
                 }
               }}
             />
