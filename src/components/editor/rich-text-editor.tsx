@@ -35,6 +35,8 @@ export function RichTextEditor({
         // Disabling these here because they are included in some StarterKit bundles,
         // and we want to configure them manually below to avoid duplicate warnings.
         codeBlock: false,
+        link: false,
+        underline: false,
       }),
 
       Underline,
