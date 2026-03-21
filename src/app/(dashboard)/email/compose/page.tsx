@@ -29,6 +29,7 @@ function ComposeInner() {
   const draftId = searchParams.get("draftId")
 
   const [to, setTo] = useState(searchParams.get("to") ?? "")
+  const [from, setFrom] = useState("contact@djalilnet.com")
   const [cc, setCc] = useState("")
   const [subject, setSubject] = useState(searchParams.get("subject") ?? "")
   const [templateId, setTemplateId] = useState("")
@@ -54,6 +55,7 @@ function ComposeInner() {
   useEffect(() => {
     if (draftData?.data) {
       const email = draftData.data;
+      setFrom(email.fromAddress || "contact@djalilnet.com");
       setTo(email.toAddress || "");
       setCc(email.ccAddresses || "");
       setSubject(email.subject || "");
@@ -85,6 +87,7 @@ function ComposeInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          from,
           to,
           cc: cc ? cc.split(",").map((e) => e.trim()) : undefined,
           subject,
@@ -122,6 +125,7 @@ function ComposeInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          from,
           to,
           cc: cc ? cc.split(",").map((e) => e.trim()) : undefined,
           subject,
@@ -212,10 +216,11 @@ function ComposeInner() {
 
         {/* Fields */}
         {[
+          { label: "From", value: from, setter: setFrom, type: "select", options: ["contact@djalilnet.com", "team@djalilnet.com", "professional@djalilnet.com"] },
           { label: "To", value: to, setter: setTo, placeholder: "recipient@example.com", type: "email" },
           { label: "CC", value: cc, setter: setCc, placeholder: "cc@example.com (comma-separated)", type: "text" },
           { label: "Subject", value: subject, setter: setSubject, placeholder: "Email subject", type: "text" },
-        ].map(({ label, value, setter, placeholder, type }) => (
+        ].map(({ label, value, setter, placeholder, type, options }) => (
           <div
             key={label}
             style={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f1f5f9" }}
@@ -223,16 +228,29 @@ function ComposeInner() {
             <span style={{ width: "80px", padding: "0.75rem 1rem", fontSize: "0.8125rem", fontWeight: "500", color: "#94a3b8", flexShrink: 0 }}>
               {label}
             </span>
-            <input
-              type={type}
-              value={value}
-              onChange={(e) => setter(e.target.value)}
-              placeholder={placeholder}
-              style={{
-                flex: 1, padding: "0.75rem 1rem 0.75rem 0",
-                border: "none", fontSize: "0.875rem", outline: "none",
-              }}
-            />
+            {type === "select" ? (
+              <select
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                style={{
+                  flex: 1, padding: "0.75rem 1rem 0.75rem 0",
+                  border: "none", fontSize: "0.875rem", outline: "none", background: "transparent"
+                }}
+              >
+                {options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            ) : (
+              <input
+                type={type}
+                value={value}
+                onChange={(e) => setter(e.target.value)}
+                placeholder={placeholder}
+                style={{
+                  flex: 1, padding: "0.75rem 1rem 0.75rem 0",
+                  border: "none", fontSize: "0.875rem", outline: "none",
+                }}
+              />
+            )}
           </div>
         ))}
 

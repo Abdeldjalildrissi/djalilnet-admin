@@ -1,7 +1,8 @@
 "use client"
 
 import type { Editor } from "@tiptap/react"
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Code2, Link, Undo, Redo, Minus } from "lucide-react"
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Code2, Link, Undo, Redo, Minus, AlignLeft, AlignCenter, AlignRight } from "lucide-react"
+import { UploadButton } from "@/lib/uploadthing"
 
 interface EditorToolbarProps {
   editor: Editor
@@ -117,6 +118,25 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
     },
     null,
     {
+      icon: AlignLeft,
+      action: () => editor.chain().focus().setTextAlign('left').run(),
+      isActive: editor.isActive({ textAlign: 'left' }),
+      title: "Align Left (Uncenter)",
+    },
+    {
+      icon: AlignCenter,
+      action: () => editor.chain().focus().setTextAlign('center').run(),
+      isActive: editor.isActive({ textAlign: 'center' }),
+      title: "Align Center",
+    },
+    {
+      icon: AlignRight,
+      action: () => editor.chain().focus().setTextAlign('right').run(),
+      isActive: editor.isActive({ textAlign: 'right' }),
+      title: "Align Right",
+    },
+    null,
+    {
       icon: Undo,
       action: () => editor.chain().focus().undo().run(),
       isActive: false,
@@ -195,6 +215,34 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           </button>
         )
       })}
+
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
+        <UploadButton
+          endpoint="emailAttachmentUploader"
+          onClientUploadComplete={(res) => {
+            res.forEach((file) => {
+              if (file.type && file.type.startsWith("image/")) {
+                editor.chain().focus().setImage({ src: file.url }).run()
+              } else {
+                editor
+                  .chain()
+                  .focus()
+                  .setLink({ href: file.url, target: "_blank" })
+                  .insertContent(`📎 ${file.name}`)
+                  .run()
+                // break link so typed text after isn't linked
+                editor.chain().focus().unsetLink().insertContent(" ").run()
+              }
+            })
+          }}
+          className="ut-button:h-8 ut-button:px-3 ut-button:text-xs ut-button:bg-[#eff6ff] ut-button:text-[#2563eb] ut-button:border-[#bfdbfe] ut-button:font-medium ut-button:rounded-md ut-button:border hover:ut-button:bg-[#dbeafe] ut-allowed-content:hidden"
+          content={{
+            button({ ready }) {
+              return ready ? "Insert Media" : "..."
+            }
+          }}
+        />
+      </div>
     </div>
   )
 }

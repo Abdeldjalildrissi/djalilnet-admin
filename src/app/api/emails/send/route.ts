@@ -63,8 +63,9 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: message }, { status: 422 })
   }
 
-  const { to, cc, subject, bodyHtml, templateId, attachments, draftId } = parsed.data
+  const { from, to, cc, subject, bodyHtml, templateId, attachments, draftId } = parsed.data
   let finalHtml = bodyHtml
+  const finalFrom = from || FROM_EMAIL
 
   if (templateId) {
     const template = await db.query.emailTemplates.findFirst({
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       .insert(emails)
       .values({
         direction: "outbound",
-        fromAddress: FROM_EMAIL,
+        fromAddress: finalFrom,
         toAddress: toArray.join(", "),
         ccAddresses: cc?.join(", "),
         subject,
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
   // Immediate delivery (Standard for Hobby plan)
   try {
     const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: finalFrom,
       to: toArray,
       cc: cc ?? [],
       subject,

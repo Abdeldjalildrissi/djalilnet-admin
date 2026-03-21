@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
 
   const draftSchema = z.object({
+    from: z.string().email().optional(),
     to: z.union([z.string(), z.array(z.string())]).optional().nullable(),
     cc: z.array(z.string()).optional(),
     subject: z.string().optional(),
@@ -37,10 +38,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Invalid input" }, { status: 422 })
   }
 
-  const { to, cc, subject, bodyHtml, templateId, draftId, attachments } = parsed.data
+  const { from, to, cc, subject, bodyHtml, templateId, draftId, attachments } = parsed.data
   const toArray = to ? (Array.isArray(to) ? to : [to]) : []
   const finalHtml = bodyHtml || ""
   const att = attachments || []
+  const finalFrom = from || FROM_EMAIL
 
   if (draftId) {
     const [updatedEmail] = await db.update(emails)
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
     const [newDraft] = await db.insert(emails)
       .values({
         direction: "outbound",
-        fromAddress: FROM_EMAIL,
+        fromAddress: finalFrom,
         toAddress: toArray.join(", "),
         ccAddresses: cc?.join(", "),
         subject: subject || "(No Subject)",

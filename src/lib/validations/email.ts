@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 export const sendEmailSchema = z.object({
+  from: z.string().email().optional(),
   to: z.union([z.string().email(), z.array(z.string().email())]),
   cc: z.array(z.string().email()).optional(),
   subject: z.string().min(1, "Subject is required").max(500),
