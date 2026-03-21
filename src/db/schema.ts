@@ -235,6 +235,7 @@ export const emails = pgTable(
     }),
     sentAt: timestamp("sent_at"),
     receivedAt: timestamp("received_at"),
+    attachments: jsonb("attachments").default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({

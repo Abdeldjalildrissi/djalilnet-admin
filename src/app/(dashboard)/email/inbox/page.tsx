@@ -7,17 +7,20 @@ import { cn, formatRelativeTime, formatDateTime, sanitize } from "@/lib/utils"
 import type { Email } from "@/db/schema"
 import Link from "next/link"
 
+import { useRouter } from "next/navigation"
+
 export default function InboxPage() {
   const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState<"all" | "unread" | "read">("all")
+  const [filter, setFilter] = useState<"all" | "unread" | "read" | "drafts">("all")
   const [selectedEmail, setSelected] = useState<Email | null>(null)
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const { data, isLoading } = useQuery<{ data: Email[] }>({
     queryKey: ["emails", "inbox", search, filter],
     queryFn: async () => {
       const params = new URLSearchParams({
-        direction: "inbound",
+        ...(filter !== "drafts" ? { direction: "inbound" } : {}),
         search,
         filter,
       })
@@ -33,6 +36,10 @@ export default function InboxPage() {
   })
 
   const handleSelectEmail = (email: Email) => {
+    if (email.status === "draft") {
+      router.push(`/email/compose?draftId=${email.id}`)
+      return
+    }
     setSelected(email)
     if (!email.isRead) markReadMutation.mutate(email.id)
   }
@@ -90,7 +97,7 @@ export default function InboxPage() {
               />
             </div>
             <div style={{ display: "flex", gap: "0.25rem" }}>
-              {(["all", "unread", "read"] as const).map((f) => (
+              {(["all", "unread", "read", "drafts"] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}

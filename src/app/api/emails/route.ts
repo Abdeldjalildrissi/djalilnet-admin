@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     query.filter === "unread" ? eq(emails.isRead, false) : undefined,
     query.filter === "read" ? eq(emails.isRead, true) : undefined,
     query.filter === "starred" ? eq(emails.isStarred, true) : undefined,
+    query.filter === "drafts" ? eq(emails.status, "draft") : undefined,
     query.search
       ? or(
           ilike(emails.fromAddress, `%${query.search}%`),

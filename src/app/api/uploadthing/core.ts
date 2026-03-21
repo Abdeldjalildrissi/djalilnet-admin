@@ -42,6 +42,41 @@ export const ourFileRouter = {
 
       return { uploadedBy: metadata.userId };
     }),
+
+  emailAttachmentUploader: f({
+    blob: {
+      maxFileSize: "16MB",
+      maxFileCount: 5,
+    },
+  })
+    .middleware(async ({ req }) => {
+      try {
+        const session = await requireAuth(req);
+        if (!session) throw new UploadThingError("Unauthorized");
+        
+        return { userId: session.user.id };
+      } catch (err) {
+        if (err instanceof UploadThingError) throw err;
+        throw new UploadThingError("Internal Server Error");
+      }
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("emailAttachmentUploader onUploadComplete START:", { userId: metadata.userId, fileUrl: file.url });
+
+      try {
+        await db.insert(media).values({
+          url: file.url,
+          name: file.name,
+          type: file.type || "application/octet-stream",
+          key: file.key,
+          size: file.size,
+        });
+      } catch (err) {
+        console.error("emailAttachmentUploader DB Insert FAILED:", err);
+      }
+
+      return { uploadedBy: metadata.userId };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

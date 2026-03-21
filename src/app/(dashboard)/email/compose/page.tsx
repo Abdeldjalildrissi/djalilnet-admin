@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, Suspense } from "react"
+import { useState, useCallback, Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { RichTextEditor } from "@/components/editor/rich-text-editor"
@@ -26,6 +26,7 @@ const inputStyle = {
 function ComposeInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const draftId = searchParams.get("draftId")
 
   const [to, setTo] = useState(searchParams.get("to") ?? "")
   const [cc, setCc] = useState("")
@@ -35,13 +36,32 @@ function ComposeInner() {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   
   const [isSending, setIsSending] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [successMsg, setSuccessMsg] = useState("")
   const [error, setError] = useState("")
 
   const { data: templatesData } = useQuery<{ data: Template[] }>({
     queryKey: ["email-templates"],
     queryFn: () => fetch("/api/email/templates").then((r) => r.json()),
   })
+
+  const { data: draftData } = useQuery({
+    queryKey: ["draft", draftId],
+    queryFn: () => fetch(`/api/emails/${draftId}`).then((r) => r.json()),
+    enabled: !!draftId,
+  })
+
+  useEffect(() => {
+    if (draftData?.data) {
+      const email = draftData.data;
+      setTo(email.toAddress || "");
+      setCc(email.ccAddresses || "");
+      setSubject(email.subject || "");
+      setTemplateId(email.templateId || "");
+      setBodyHtml(email.bodyHtml || "");
+      setAttachments(email.attachments || []);
+    }
+  }, [draftData])
 
   const handleTemplateChange = (id: string) => {
     setTemplateId(id)
@@ -70,11 +90,12 @@ function ComposeInner() {
           subject,
           bodyHtml,
           templateId: templateId || undefined,
+          draftId: draftId || undefined,
           attachments: attachments.length > 0 ? attachments : undefined,
         }),
       })
       if (res.ok) {
-        setSent(true)
+        setSuccessMsg("Email sent successfully!")
         setTimeout(() => router.push("/email/inbox"), 1500)
       } else {
         const data = await res.json()
@@ -93,15 +114,44 @@ function ComposeInner() {
     }
   }
 
+  const handleSaveDraft = async () => {
+    setError("")
+    setIsSavingDraft(true)
+    try {
+      const res = await fetch("/api/emails/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to,
+          cc: cc ? cc.split(",").map((e) => e.trim()) : undefined,
+          subject,
+          bodyHtml,
+          templateId: templateId || undefined,
+          draftId: draftId || undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
+        }),
+      })
+      if (res.ok) {
+        setSuccessMsg("Draft saved successfully!")
+        setTimeout(() => router.push("/email/inbox"), 1500)
+      } else {
+        const data = await res.json()
+        setError(data.error || "Failed to save draft")
+      }
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
   const removeAttachment = (url: string) => {
     setAttachments(prev => prev.filter(a => a.url !== url))
   }
 
-  if (sent) {
+  if (successMsg) {
     return (
       <div style={{ textAlign: "center", padding: "4rem", color: "#10b981" }}>
         <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
-        <p style={{ fontWeight: "600" }}>Email sent successfully!</p>
+        <p style={{ fontWeight: "600" }}>{successMsg}</p>
         <p style={{ color: "#94a3b8", fontSize: "0.875rem" }}>Redirecting to inbox...</p>
       </div>
     )
@@ -116,21 +166,34 @@ function ComposeInner() {
           </Link>
           <h1 style={{ fontSize: "1.375rem", fontWeight: "700", margin: 0 }}>Compose Email</h1>
         </div>
-        <button
-          onClick={handleSend}
-          disabled={isSending || !to || !subject || !bodyHtml}
-          style={{
-            display: "flex", alignItems: "center", gap: "0.375rem",
-            padding: "0.5rem 1.25rem", border: "none",
-            borderRadius: "0.5rem",
-            background: isSending || !to || !subject || !bodyHtml ? "#94a3b8" : "linear-gradient(135deg, #3b82f6, #6366f1)",
-            color: "white", fontSize: "0.875rem", fontWeight: "500",
-            cursor: isSending || !to || !subject || !bodyHtml ? "not-allowed" : "pointer",
-          }}
-        >
-          {isSending ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : <Send style={{ width: "14px", height: "14px" }} />}
-          {isSending ? "Sending..." : "Send"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <button
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft || isSending}
+            style={{
+              padding: "0.5rem 1rem", border: "1px solid #e2e8f0", background: "white",
+              borderRadius: "0.5rem", color: "#64748b", fontSize: "0.875rem", fontWeight: "500",
+              cursor: isSavingDraft || isSending ? "not-allowed" : "pointer"
+            }}
+          >
+            {isSavingDraft ? "Saving..." : "Save Draft"}
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={isSending || isSavingDraft || !to || !subject || !bodyHtml}
+            style={{
+              display: "flex", alignItems: "center", gap: "0.375rem",
+              padding: "0.5rem 1.25rem", border: "none",
+              borderRadius: "0.5rem",
+              background: isSending || isSavingDraft || !to || !subject || !bodyHtml ? "#94a3b8" : "linear-gradient(135deg, #3b82f6, #6366f1)",
+              color: "white", fontSize: "0.875rem", fontWeight: "500",
+              cursor: isSending || isSavingDraft || !to || !subject || !bodyHtml ? "not-allowed" : "pointer",
+            }}
+          >
+            {isSending ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : <Send style={{ width: "14px", height: "14px" }} />}
+            {isSending ? "Sending..." : "Send"}
+          </button>
+        </div>
       </div>
 
       <div
@@ -192,7 +255,7 @@ function ComposeInner() {
           </div>
           <div style={{ padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <UploadButton
-              endpoint="imageUploader"
+              endpoint="emailAttachmentUploader"
               onClientUploadComplete={(res) => {
                 setAttachments(prev => [...prev, ...res.map(f => ({ filename: f.name, url: f.url, size: f.size }))])
               }}

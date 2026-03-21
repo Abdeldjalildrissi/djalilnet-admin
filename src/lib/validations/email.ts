@@ -10,13 +10,15 @@ export const sendEmailSchema = z.object({
   attachments: z.array(z.object({
     filename: z.string(),
     url: z.string().url(),
+    size: z.number().optional()
   })).optional(),
+  draftId: z.string().uuid().optional(),
 })
 
 export const emailQuerySchema = z.object({
   direction: z.enum(["inbound", "outbound"]).optional(),
   search: z.string().optional(),
-  filter: z.enum(["all", "unread", "read", "starred"]).default("all"),
+  filter: z.enum(["all", "unread", "read", "starred", "drafts"]).default("all"),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(30),
 })

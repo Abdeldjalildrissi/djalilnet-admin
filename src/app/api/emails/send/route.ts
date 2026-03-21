@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: message }, { status: 422 })
   }
 
-  const { to, cc, subject, bodyHtml, templateId, attachments } = parsed.data
+  const { to, cc, subject, bodyHtml, templateId, attachments, draftId } = parsed.data
   let finalHtml = bodyHtml
 
   if (templateId) {
@@ -80,21 +80,41 @@ export async function POST(request: NextRequest) {
 
   const toArray = Array.isArray(to) ? to : [to]
 
-  const [sentEmail] = await db
-    .insert(emails)
-    .values({
-      direction: "outbound",
-      fromAddress: FROM_EMAIL,
-      toAddress: toArray.join(", "),
-      ccAddresses: cc?.join(", "),
-      subject,
-      bodyHtml: finalHtml,
-      bodyText: htmlToText(finalHtml),
-      status: "draft",
-      sentById: session.user.id,
-      templateId: templateId ?? null,
-    })
-    .returning()
+  let sentEmail;
+  if (draftId) {
+    const [updatedEmail] = await db.update(emails)
+      .set({
+        toAddress: toArray.join(", "),
+        ccAddresses: cc?.join(", "),
+        subject,
+        bodyHtml: finalHtml,
+        bodyText: htmlToText(finalHtml),
+        status: "draft",
+        templateId: templateId ?? null,
+        attachments: attachments ?? [],
+      })
+      .where(eq(emails.id, draftId))
+      .returning()
+    sentEmail = updatedEmail;
+  } else {
+    const [newEmail] = await db
+      .insert(emails)
+      .values({
+        direction: "outbound",
+        fromAddress: FROM_EMAIL,
+        toAddress: toArray.join(", "),
+        ccAddresses: cc?.join(", "),
+        subject,
+        bodyHtml: finalHtml,
+        bodyText: htmlToText(finalHtml),
+        status: "draft",
+        sentById: session.user.id,
+        templateId: templateId ?? null,
+        attachments: attachments ?? [],
+      })
+      .returning()
+    sentEmail = newEmail;
+  }
 
   // Enqueue in DB for history/audit
   const [queueItem] = await db.insert(emailQueue).values({
