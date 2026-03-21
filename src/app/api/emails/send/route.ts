@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const parsed = sendEmailSchema.safeParse(body)
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 422 })
+    const message = parsed.error.issues[0]?.message ?? "Invalid input"
+    return Response.json({ error: message }, { status: 422 })
   }
 
   const { to, cc, subject, bodyHtml, templateId, attachments } = parsed.data
@@ -119,12 +120,7 @@ export async function POST(request: NextRequest) {
       attachments: attachments?.map(a => ({ filename: a.filename, path: a.url })),
     })
 
-    if (error) {
-      console.error("[SendAPI] Resend API Error:", error)
-      throw new Error(error.message)
-    }
-
-    console.log("[SendAPI] Resend API Success:", data)
+    if (error) throw new Error(error.message)
 
     const [updatedEmail] = await db.update(emails)
       .set({ status: "sent", resendId: data!.id, sentAt: new Date() })

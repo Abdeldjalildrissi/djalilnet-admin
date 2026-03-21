@@ -78,7 +78,15 @@ function ComposeInner() {
         setTimeout(() => router.push("/email/inbox"), 1500)
       } else {
         const data = await res.json()
-        setError(data.error ?? "Failed to send email")
+        const errorData = data.error
+        if (typeof errorData === "string") {
+          setError(errorData)
+        } else if (errorData?.fieldErrors) {
+          const firstErr = Object.values(errorData.fieldErrors)[0] as string[]
+          setError(firstErr?.[0] || "Validation failed")
+        } else {
+          setError(errorData?.message || "Failed to send email")
+        }
       }
     } finally {
       setIsSending(false)
