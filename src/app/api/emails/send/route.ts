@@ -119,7 +119,12 @@ export async function POST(request: NextRequest) {
       attachments: attachments?.map(a => ({ filename: a.filename, path: a.url })),
     })
 
-    if (error) throw new Error(error.message)
+    if (error) {
+      console.error("[SendAPI] Resend API Error:", error)
+      throw new Error(error.message)
+    }
+
+    console.log("[SendAPI] Resend API Success:", data)
 
     const [updatedEmail] = await db.update(emails)
       .set({ status: "sent", resendId: data!.id, sentAt: new Date() })
