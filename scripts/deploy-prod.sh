@@ -13,7 +13,7 @@ set_vercel_env() {
   echo "Updating $key on Vercel (Production)..."
   # Support both adding and updating by removing first
   npx vercel env rm "$key" production --yes || true
-  echo "$value" | npx vercel env add "$key" production --yes
+  printf "%s" "$value" | npx vercel env add "$key" production --yes
 }
 
 set_vercel_env "DATABASE_URL" "$DATABASE_URL"

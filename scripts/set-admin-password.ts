@@ -66,7 +66,7 @@ async function setAdminPassword(email: string, newPassword: string) {
   }
 }
 
-const email = process.argv[2] || "abdeldjalildrissi@gmail.com"
+const email = process.argv[2] || "admin@djalilnet.com"
 const password = process.argv[3]
 
 if (!password) {

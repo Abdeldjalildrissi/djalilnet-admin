@@ -12,7 +12,7 @@ async function main() {
     name: "DRISSI Abdeldjalil",
     role: "Electromechanical Engineer & Field Service Specialist",
     tagline: "I scale engineering excellence in the field, blending electromechanical expertise with HSE standards.",
-    email: "abdeldjalildrissi@gmail.com",
+    email: "contact@djalilnet.com",
     phone: "+213 790750708",
     location: "Algeria / Libya (Field Deployed)",
     avatar: "/avatar.png",
