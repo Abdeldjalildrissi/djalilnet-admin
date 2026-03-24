@@ -446,7 +446,7 @@ function ComposeInner() {
                   </div>
                 ))}
                 <UploadButton
-                  endpoint="emailAttachment"
+                  endpoint="emailAttachmentUploader"
                   onClientUploadComplete={(res) => {
                     if (res) {
                       setAttachments(prev => [...prev, ...res.map(r => ({ filename: r.name, url: r.url, size: r.size }))])
