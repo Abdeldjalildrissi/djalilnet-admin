@@ -17,8 +17,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:3001",
     "https://admin.djalilnet.com",
-    "https://djalilnet-admin-39cplni26-abdeldjalildrissi-6291s-projects.vercel.app",
-    "https://djalilnet-admin-eojsglkvg-abdeldjalildrissi-6291s-projects.vercel.app"
+    ...(process.env.NEXT_PUBLIC_ADMIN_URL ? [process.env.NEXT_PUBLIC_ADMIN_URL] : []),
   ],
   emailAndPassword: {
     enabled: true,

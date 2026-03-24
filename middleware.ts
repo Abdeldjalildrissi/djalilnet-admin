@@ -57,9 +57,14 @@ export async function middleware(request: NextRequest) {
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline';
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https: blob: utfs.io images.unsplash.com res.cloudinary.com avatars.githubusercontent.com;
-    connect-src 'self' https://*.ingest.sentry.io https://uploadthing.com https://*.uploadthing.com https://utfs.io https://*.utfs.io;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com data:;
+    img-src 'self' data: blob: https://utfs.io https://*.utfs.io https://images.unsplash.com https://res.cloudinary.com https://avatars.githubusercontent.com https://uploadthing.com;
+    connect-src 'self' https://uploadthing.com https://*.uploadthing.com https://utfs.io https://*.utfs.io https://*.ingest.sentry.io;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-src 'none';
     frame-ancestors 'none';
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, " ").trim();
@@ -69,10 +74,17 @@ export async function middleware(request: NextRequest) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  response.headers.set("X-DNS-Prefetch-Control", "off");
+  // Remove server fingerprinting header
+  response.headers.delete("X-Powered-By");
 
   if (isProd) {
-    response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   }
 
   return response;

@@ -25,14 +25,14 @@ export const openTrackingLimit = new Ratelimit({
 
 export const authRateLimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1m"), // 10 login attempts per minute
+  limiter: Ratelimit.slidingWindow(5, "15m"), // 5 login attempts per 15 minutes
   analytics: true,
   prefix: "ratelimit:auth",
 })
 
 export const globalRateLimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(100, "1m"), // 100 requests per minute globally
+  limiter: Ratelimit.slidingWindow(60, "1m"), // 60 requests per minute globally
   analytics: true,
   prefix: "ratelimit:global",
 })
