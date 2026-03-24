@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 test('Get admin accessibility violations', async ({ page }) => {
   await page.goto('http://localhost:3001/login');
-  await page.fill('input[type="email"]', 'abdeldjalildrissi@gmail.com');
+  await page.fill('input[type="email"]', 'admin@djalilnet.com');
   await page.fill('input[type="password"]', 'Admin123!');
   await page.click('button[type="submit"]');
   // Next.js might redirect to / which then renders dashboard

@@ -5,7 +5,7 @@ test.describe('Admin Panel: Deep Interaction & Accessibility', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
     await page.waitForSelector('input[type="email"]');
-    await page.fill('input[type="email"]', 'abdeldjalildrissi@gmail.com');
+    await page.fill('input[type="email"]', 'admin@djalilnet.com');
     await page.fill('input[type="password"]', 'Admin123!');
     await page.click('button[type="submit"]');
     

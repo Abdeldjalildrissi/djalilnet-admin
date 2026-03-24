@@ -12,7 +12,7 @@ async function seed() {
     .insert(users)
     .values([{
       id: "admin-user-001",
-      email: "abdeldjalildrissi@gmail.com",
+      email: "admin@djalilnet.com",
       name: "DRISSI Abdeldjalil",
       role: "super_admin",
       emailVerified: true,
