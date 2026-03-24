@@ -12,7 +12,7 @@ import { EditorToolbar } from "./editor-toolbar"
 import type { JSONContent } from "@tiptap/react"
 
 interface RichTextEditorProps {
-  content?: JSONContent | null
+  content?: JSONContent | string | null
   onChange?: (content: JSONContent, html: string) => void
   placeholder?: string
   editable?: boolean

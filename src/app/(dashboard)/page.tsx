@@ -270,14 +270,15 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <div style={{ width: "100%", height: "240px" }}>
+        <div style={{ width: "100%", height: 240, minWidth: 200, minHeight: 240, position: "relative" }}>
           {isLoading ? (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
               Loading chart...
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data?.activityData}>
+            <div style={{ position: "absolute", inset: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data?.activityData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="name" 
@@ -304,6 +305,7 @@ export default function DashboardPage() {
                 <Bar dataKey="emails" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={32} />
               </BarChart>
             </ResponsiveContainer>
+            </div>
           )}
         </div>
       </div>

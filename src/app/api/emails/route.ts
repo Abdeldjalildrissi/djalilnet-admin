@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/db"
 import { emails } from "@/db/schema"
-import { desc, eq, ilike, or, and } from "drizzle-orm"
+import { desc, eq, ilike, or, and, like, notIlike } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth-helpers"
 import { emailQuerySchema } from "@/lib/validations/email"
 
@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
     query.filter === "read" ? eq(emails.isRead, true) : undefined,
     query.filter === "starred" ? eq(emails.isStarred, true) : undefined,
     query.filter === "drafts" ? eq(emails.status, "draft") : undefined,
+    query.filter === "sent" ? eq(emails.direction, "outbound") : undefined,
+    query.filter === "spam" ? like(emails.subject, "%[SPAM]%") : undefined,
+    query.filter === "inbox" ? and(eq(emails.direction, "inbound"), notIlike(emails.subject, "%[SPAM]%")) : undefined,
     query.search
       ? or(
           ilike(emails.fromAddress, `%${query.search}%`),

@@ -50,6 +50,15 @@ export const queueStatusEnum = pgEnum("queue_status", [
   "failed",
 ])
 
+export const campaignStatusEnum = pgEnum("campaign_status", [
+  "pending",
+  "scheduled",
+  "processing",
+  "completed",
+  "failed",
+  "cancelled",
+])
+
 // ─── USERS ──────────────────────────────────────────────────────────────────
 
 export const users = pgTable(
@@ -206,6 +215,84 @@ export const emailTemplates = pgTable(
   })
 )
 
+// ─── SENDERS ─────────────────────────────────────────────────────────────────
+
+export const emailSenders = pgTable(
+  "email_senders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: varchar("email", { length: 255 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    emailIdx: uniqueIndex("email_senders_email_idx").on(t.email),
+  })
+)
+
+// ─── EMAIL CAMPAIGNS ─────────────────────────────────────────────────────────
+
+export const emailCampaigns = pgTable(
+  "email_campaigns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: varchar("name", { length: 200 }).notNull(),
+    subject: varchar("subject", { length: 500 }).notNull(),
+    templateId: uuid("template_id").references(() => emailTemplates.id, {
+      onDelete: "set null",
+    }),
+    senderId: uuid("sender_id").references(() => emailSenders.id, {
+      onDelete: "set null",
+    }),
+    bodyHtml: text("body_html").notNull(),
+    scheduledAt: timestamp("scheduled_at"),
+    status: campaignStatusEnum("status").default("pending").notNull(),
+    totalRecipients: integer("total_recipients").default(0).notNull(),
+    sentRecipients: integer("sent_recipients").default(0).notNull(),
+    failedRecipients: integer("failed_recipients").default(0).notNull(),
+    createdById: text("created_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    statusIdx: index("email_campaigns_status_idx").on(t.status),
+    scheduledAtIdx: index("email_campaigns_scheduled_at_idx").on(t.scheduledAt),
+  })
+)
+
+// ─── EMAIL RECIPIENTS ────────────────────────────────────────────────────────
+
+export const emailRecipients = pgTable(
+  "email_recipients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => emailCampaigns.id, { onDelete: "cascade" }),
+    email: varchar("email", { length: 255 }).notNull(),
+    firstName: varchar("first_name", { length: 100 }),
+    lastName: varchar("last_name", { length: 100 }),
+    status: queueStatusEnum("status").default("pending").notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    maxAttempts: integer("max_attempts").default(3).notNull(),
+    error: text("error"),
+    lastAttemptAt: timestamp("last_attempt_at"),
+    processedAt: timestamp("processed_at"),
+    openedAt: timestamp("opened_at"),
+    clickedAt: timestamp("clicked_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    campaignIdx: index("email_recipients_campaign_id_idx").on(t.campaignId),
+    statusIdx: index("email_recipients_status_idx").on(t.status),
+    emailIdx: index("email_recipients_email_idx").on(t.email),
+  })
+)
+
 // ─── EMAILS ──────────────────────────────────────────────────────────────────
 
 export const emails = pgTable(
@@ -318,6 +405,33 @@ export const emailsRelations = relations(emails, ({ one }) => ({
   }),
 }))
 
+export const emailCampaignsRelations = relations(emailCampaigns, ({ one, many }) => ({
+  template: one(emailTemplates, {
+    fields: [emailCampaigns.templateId],
+    references: [emailTemplates.id],
+  }),
+  sender: one(emailSenders, {
+    fields: [emailCampaigns.senderId],
+    references: [emailSenders.id],
+  }),
+  createdBy: one(users, {
+    fields: [emailCampaigns.createdById],
+    references: [users.id],
+  }),
+  recipients: many(emailRecipients),
+}))
+
+export const emailRecipientsRelations = relations(emailRecipients, ({ one }) => ({
+  campaign: one(emailCampaigns, {
+    fields: [emailRecipients.campaignId],
+    references: [emailCampaigns.id],
+  }),
+}))
+
+export const emailSendersRelations = relations(emailSenders, ({ many }) => ({
+  campaigns: many(emailCampaigns),
+}))
+
 export const categoriesRelations = relations(categories, ({ many }) => ({
   articles: many(articles),
 }))
@@ -368,6 +482,12 @@ export type EmailTemplate = typeof emailTemplates.$inferSelect
 export type ActivityLog = typeof activityLogs.$inferSelect
 export type Media = typeof media.$inferSelect
 export type MediaAlbum = typeof mediaAlbums.$inferSelect
+export type EmailSender = typeof emailSenders.$inferSelect
+export type NewEmailSender = typeof emailSenders.$inferInsert
+export type EmailCampaign = typeof emailCampaigns.$inferSelect
+export type NewEmailCampaign = typeof emailCampaigns.$inferInsert
+export type EmailRecipient = typeof emailRecipients.$inferSelect
+export type NewEmailRecipient = typeof emailRecipients.$inferInsert
 
 
 // ─── DJALILNET LEGACY FORMS & ANALYTICS ─────────────────────────────────────

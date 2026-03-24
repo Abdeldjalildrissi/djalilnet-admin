@@ -33,13 +33,29 @@ export async function POST(req: NextRequest) {
 
     // Handle inbound email
     if (type === "email.received") {
+      let bodyText = data.text ?? "";
+      let bodyHtml = data.html ? sanitize(data.html) : "";
+      
+      try {
+        const { Resend } = await import("resend");
+        const resend = new Resend(process.env.RESEND_API_KEY!);
+        const { data: fullEmail } = await resend.emails.receiving.get(data.email_id);
+        
+        if (fullEmail) {
+          bodyText = fullEmail.text ?? bodyText;
+          bodyHtml = fullEmail.html ? sanitize(fullEmail.html) : bodyHtml;
+        }
+      } catch (fetchErr) {
+        console.error("[WEBHOOK] Failed to fetch full inbound email:", fetchErr);
+      }
+
       await db.insert(emails).values({
         direction: "inbound",
         fromAddress: data.from,
         toAddress: Array.isArray(data.to) ? data.to[0] : data.to,
         subject: data.subject ?? "(no subject)",
-        bodyText: data.text ?? "",
-        bodyHtml: data.html ? sanitize(data.html) : "",
+        bodyText,
+        bodyHtml,
         status: "received",
         resendId: data.email_id,
         receivedAt: new Date(data.created_at),

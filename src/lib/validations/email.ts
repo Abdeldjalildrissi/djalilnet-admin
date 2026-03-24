@@ -19,7 +19,7 @@ export const sendEmailSchema = z.object({
 export const emailQuerySchema = z.object({
   direction: z.enum(["inbound", "outbound"]).optional(),
   search: z.string().optional(),
-  filter: z.enum(["all", "unread", "read", "starred", "drafts"]).default("all"),
+  filter: z.enum(["inbox", "sent", "spam", "drafts", "all", "unread", "read", "starred"]).default("all"),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(30),
 })

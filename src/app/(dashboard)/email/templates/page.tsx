@@ -1,16 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, Pencil, Trash2, Loader2, Save, X } from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, Save, X, Eye, Code, FileText, Layout, Info } from "lucide-react"
 import { formatRelativeTime } from "@/lib/utils"
+import { RichTextEditor } from "@/components/editor/rich-text-editor"
+import type { JSONContent } from "@tiptap/react"
 
 interface Template {
-  id: string; 
-  name: string; 
-  subject: string;
-  bodyHtml: string; 
-  variables: string[]; 
+  id: string
+  name: string
+  subject: string
+  bodyHtml: string
+  variables: string[]
   createdAt: string
 }
 
@@ -23,13 +25,13 @@ export default function TemplatesPage() {
   const [subject, setSubject] = useState("")
   const [bodyHtml, setBodyHtml] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [viewMode, setViewMode] = useState<"edit" | "preview">("edit")
 
   const { data, isLoading } = useQuery<{ data: Template[] }>({
     queryKey: ["email-templates"],
     queryFn: () => fetch("/api/email/templates").then((r) => r.json()),
   })
 
-  // Basic variable extraction from {{var}} syntax
   const extractVariables = (text: string) => {
     const matches = text.matchAll(/\{\{(.+?)\}\}/g)
     return Array.from(new Set(Array.from(matches).map(m => m[1].trim())))
@@ -71,6 +73,7 @@ export default function TemplatesPage() {
     setShowForm(false)
     setEditingId(null)
     setName(""); setSubject(""); setBodyHtml("")
+    setViewMode("edit")
   }
 
   const startEdit = (template: Template) => {
@@ -81,100 +84,120 @@ export default function TemplatesPage() {
     setShowForm(true)
   }
 
-  const inputStyle = {
-    width: "100%", padding: "0.5rem 0.75rem",
-    border: "1px solid #e2e8f0", borderRadius: "0.375rem",
-    fontSize: "0.875rem", outline: "none", boxSizing: "border-box" as const,
-  }
+  const handleEditorChange = useCallback((_: JSONContent, html: string) => {
+    setBodyHtml(html)
+  }, [])
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 style={{ fontSize: "1.375rem", fontWeight: "700", margin: "0 0 0.25rem" }}>Email Templates</h1>
-          <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>Create and manage reusable email layouts</p>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Layout className="text-blue-600 w-6 h-6" />
+            Email Templates
+          </h1>
+          <p className="text-slate-500 mt-1">Design beautiful, reusable email structures</p>
         </div>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: "0.375rem",
-              padding: "0.5rem 1rem",
-              background: "linear-gradient(135deg, #3b82f6, #6366f1)",
-              color: "white", border: "none", borderRadius: "0.5rem",
-              fontSize: "0.875rem", fontWeight: "500", cursor: "pointer",
-            }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-md shadow-blue-500/10 font-semibold"
           >
-            <Plus style={{ width: "15px", height: "15px" }} />
+            <Plus className="w-5 h-5" />
             New Template
           </button>
         )}
       </div>
 
-      {/* Create/Edit form */}
       {showForm && (
-        <div
-          style={{
-            background: "white", border: "1px solid #e2e8f0",
-            borderRadius: "0.75rem", padding: "1.25rem",
-            marginBottom: "1.5rem", boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)"
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-            <h3 style={{ fontSize: "0.9375rem", fontWeight: "600", margin: 0 }}>
-              {editingId ? "Edit Template" : "New Template"}
-            </h3>
-            <button onClick={resetForm} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
-              <X style={{ width: "18px", height: "18px" }} />
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div className="flex items-center gap-4">
+               <h3 className="text-lg font-bold text-slate-800">
+                {editingId ? "Edit Template" : "Create New Template"}
+              </h3>
+              <div className="flex bg-slate-200/60 p-1 rounded-lg">
+                <button 
+                  onClick={() => setViewMode("edit")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all ${viewMode === 'edit' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  <Code className="w-3.5 h-3.5" /> EDITOR
+                </button>
+                <button 
+                  onClick={() => setViewMode("preview")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold transition-all ${viewMode === 'preview' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  <Eye className="w-3.5 h-3.5" /> PREVIEW
+                </button>
+              </div>
+            </div>
+            <button onClick={resetForm} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <X className="w-6 h-6" />
             </button>
           </div>
           
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: "500", color: "#374151", marginBottom: "0.375rem" }}>Template Name</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Welcome Email" style={inputStyle} />
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Template Name</label>
+                <input 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  placeholder="e.g. Welcome Series - Day 1" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
+                />
               </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: "500", color: "#374151", marginBottom: "0.375rem" }}>Subject Line</label>
-                <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject (use {{name}} for dynamic data)" style={inputStyle} />
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Default Subject Line</label>
+                <input 
+                  value={subject} 
+                  onChange={(e) => setSubject(e.target.value)} 
+                  placeholder="Subject (use {{name}} for dynamic data)" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
+                />
               </div>
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: "500", color: "#374151", marginBottom: "0.375rem" }}>Body Content (HTML)</label>
-              <textarea
-                value={bodyHtml}
-                onChange={(e) => setBodyHtml(e.target.value)}
-                placeholder="<h1>Hello {{name}}!</h1>"
-                rows={10}
-                style={{ ...inputStyle, fontFamily: "monospace", resize: "vertical" }}
-              />
-              <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "0.5rem" }}>
-                Tip: Variables will be automatically detected based on the <code>{"{{variable_name}}"}</code> syntax.
-              </p>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Body</label>
+              {viewMode === "edit" ? (
+                <div className="border border-slate-200 rounded-2xl overflow-hidden ring-1 ring-slate-100">
+                  <RichTextEditor
+                    content={bodyHtml || null}
+                    onChange={handleEditorChange}
+                    placeholder="Start designing your template content here..."
+                    minHeight="450px"
+                  />
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-2xl p-8 min-h-[450px] bg-slate-50 flex justify-center">
+                  <div className="bg-white w-full max-w-2xl shadow-sm border border-slate-100 p-10 prose prose-slate">
+                    <div className="mb-8 pb-4 border-b border-slate-100">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Subject Preview</p>
+                      <h2 className="text-lg font-bold text-slate-800 m-0">{subject || "No subject set"}</h2>
+                    </div>
+                    <div dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold p-2 px-4 bg-slate-50 rounded-lg border border-slate-100 mt-2">
+                <Info className="w-3.5 h-3.5 text-blue-500" />
+                TIP: VARIABLES WILL BE AUTOMATICALLY DETECTED BASED ON THE {"{{variable_name}}"} SYNTAX.
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem", paddingTop: "0.5rem" }}>
+
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={handleSave}
                 disabled={isSaving || !name || !subject || !bodyHtml}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.5rem",
-                  padding: "0.5rem 1.25rem", border: "none", borderRadius: "0.5rem",
-                  background: "#3b82f6", color: "white",
-                  fontSize: "0.875rem", fontWeight: "500", cursor: "pointer",
-                }}
+                className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 font-bold transition-all shadow-lg shadow-blue-500/20"
               >
-                {isSaving ? <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} /> : <Save style={{ width: "16px", height: "16px" }} />}
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {editingId ? "Update Template" : "Save Template"}
               </button>
               <button
                 onClick={resetForm}
-                style={{
-                  padding: "0.5rem 1.25rem", border: "1px solid #e2e8f0",
-                  borderRadius: "0.5rem", background: "white",
-                  fontSize: "0.875rem", fontWeight: "500", cursor: "pointer",
-                  color: "#374151"
-                }}
+                className="px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all"
               >
                 Cancel
               </button>
@@ -184,69 +207,78 @@ export default function TemplatesPage() {
       )}
 
       {/* Templates list */}
-      <div
-        style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "0.75rem", overflow: "hidden" }}
-      >
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "#94a3b8" }}>
-            <Loader2 style={{ width: "24px", height: "24px", animation: "spin 1s linear infinite", margin: "0 auto 1rem" }} />
-            <p style={{ fontSize: "0.875rem" }}>Loading templates...</p>
+          <div className="p-20 text-center text-slate-400">
+            <Loader2 className="w-10 h-10 animate-spin mx-auto mb-6 opacity-20" />
+            <p className="font-medium">Loading your design library...</p>
           </div>
         ) : !data?.data || data.data.length === 0 ? (
-          <div style={{ padding: "4rem", textAlign: "center", color: "#94a3b8" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📄</div>
-            <p style={{ fontSize: "0.875rem" }}>No templates yet. Create your first template to speed up email sending.</p>
+          <div className="p-20 text-center text-slate-400">
+            <FileText className="w-16 h-16 mx-auto mb-6 opacity-5" />
+            <h3 className="text-slate-900 font-semibold mb-1 text-lg">Your template library is empty</h3>
+            <p className="max-w-xs mx-auto text-sm">Templates allow you to reuse proven designs and save time on every campaign.</p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-8 inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-500/10"
+            >
+              <Plus className="w-4 h-4" />
+              Create Template
+            </button>
           </div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                <th style={{ textAlign: "left", padding: "1rem 1.25rem", fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase" }}>Name</th>
-                <th style={{ textAlign: "left", padding: "1rem 1.25rem", fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase" }}>Subject</th>
-                <th style={{ textAlign: "left", padding: "1rem 1.25rem", fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase" }}>Variables</th>
-                <th style={{ textAlign: "left", padding: "1rem 1.25rem", fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase" }}>Joined</th>
-                <th style={{ textAlign: "right", padding: "1rem 1.25rem" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.data?.map((template) => (
-                <tr key={template.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "1rem 1.25rem", fontSize: "0.875rem", fontWeight: "600", color: "#0f172a" }}>{template.name}</td>
-                  <td style={{ padding: "1rem 1.25rem", fontSize: "0.875rem", color: "#64748b" }}>{template.subject}</td>
-                  <td style={{ padding: "1rem 1.25rem" }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                      {template.variables?.length > 0 ? template.variables.map((v) => (
-                        <span key={v} style={{ padding: "2px 6px", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "4px", fontSize: "0.6875rem", color: "#475569" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 divide-x divide-y divide-slate-100">
+            {data.data.map((template) => (
+              <div key={template.id} className="p-6 hover:bg-slate-50/50 transition-all group relative">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(template)}
+                      className="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                      title="Edit Template"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(template.id)}
+                      className="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm"
+                      title="Delete Template"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-bold text-slate-900 truncate">{template.name}</h4>
+                  <p className="text-xs text-slate-500 line-clamp-1 italic font-medium">"{template.subject}"</p>
+                </div>
+
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1">
+                    {template.variables?.length > 0 ? (
+                      template.variables.slice(0, 3).map((v) => (
+                        <span key={v} className="px-1.5 py-0.5 bg-slate-100 text-[10px] font-bold text-slate-500 rounded uppercase tracking-tighter border border-slate-200/50">
                           {v}
                         </span>
-                      )) : <span style={{ fontSize: "0.75rem", color: "#cbd5e1" }}>none</span>}
-                    </div>
-                  </td>
-                  <td style={{ padding: "1rem 1.25rem", fontSize: "0.8125rem", color: "#94a3b8" }}>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Static Content</span>
+                    )}
+                    {template.variables?.length > 3 && (
+                      <span className="text-[10px] text-slate-400 font-bold">+{template.variables.length - 3} more</span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
                     {formatRelativeTime(template.createdAt)}
-                  </td>
-                  <td style={{ padding: "1rem 1.25rem", textAlign: "right" }}>
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                      <button
-                        onClick={() => startEdit(template)}
-                        style={{ padding: "0.375rem", borderRadius: "0.375rem", border: "1px solid #e2e8f0", background: "white", cursor: "pointer", color: "#64748b" }}
-                        title="Edit Template"
-                      >
-                        <Pencil style={{ width: "14px", height: "14px" }} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(template.id)}
-                        style={{ padding: "0.375rem", borderRadius: "0.375rem", border: "1px solid #fee2e2", background: "white", cursor: "pointer", color: "#ef4444" }}
-                        title="Delete Template"
-                      >
-                        <Trash2 style={{ width: "14px", height: "14px" }} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
