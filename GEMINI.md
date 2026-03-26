@@ -56,4 +56,4 @@ This file contains a growing ruleset that improves over time. **At session start
 17. [CODE] When increasing rate limits for security-sensitive paths (e.g., auth), document the reasoning and ensure it aligns with the expected user load and security posture.
 18. [CODE] Implement multi-layered title stripping for the blog: use regex-based stripping in API handlers (POST/PATCH) to clean the database, and `prose-h1:hidden` (or equivalent) in the frontend for visual safety.
 19. [PROCESS] Automatically append new technical learnings and user-requested constraints to `GEMINI.md` at the end of every significant task without being prompted.
-20. [STYLE] For long-form blog content, maintain a high-readability typography scale: use `prose-xl` (20px) as the base and `md:prose-2xl` (24px) for desktop viewports.
+20. [STYLE] For long-form blog content, maintain a premium typography scale and layout: use `prose-xl` (20px) base, `md:prose-2xl` (24px) desktop, and `lg:text-[26px]` for large screens. Always bound content with `max-w-4xl mx-auto` to ensure optimal line length and centering.
