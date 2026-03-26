@@ -105,7 +105,7 @@ export function ProfileManager() {
   }
 
   return (
-    <Card className="bg-white border-white/20 shadow-xl">
+    <Card className="bg-white/40 backdrop-blur-md border-white/20 shadow-xl">
       <CardHeader>
         <CardTitle>Personal Information</CardTitle>
         <CardDescription>

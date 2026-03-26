@@ -197,7 +197,7 @@ export function ExperienceManager() {
       </div>
 
       {experiences.length === 0 ? (
-        <Card className="bg-white border-white/20 border-dashed p-12 flex flex-col items-center justify-center text-center">
+        <Card className="bg-white/40 backdrop-blur-md border-white/20 border-dashed p-12 flex flex-col items-center justify-center text-center">
           <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium">No experience added yet</h3>
           <p className="text-muted-foreground max-w-sm">
@@ -207,7 +207,7 @@ export function ExperienceManager() {
       ) : (
         <div className="grid gap-4">
           {experiences.map((exp) => (
-            <Card key={exp.id} className="bg-white border-white/20 hover:shadow-lg transition-all group overflow-hidden">
+            <Card key={exp.id} className="bg-white/40 backdrop-blur-md border-white/20 hover:shadow-lg transition-all group overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-4">
@@ -264,7 +264,7 @@ export function ExperienceManager() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-white border-white/20 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-white/90 backdrop-blur-xl border-white/20 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingExp ? "Edit Experience" : "Add Experience"}</DialogTitle>
           </DialogHeader>
@@ -329,7 +329,7 @@ export function ExperienceManager() {
                 control={form.control}
                 name="current"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-white/10 p-4 bg-white/5">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
