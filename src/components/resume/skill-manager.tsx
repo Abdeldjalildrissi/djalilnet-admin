@@ -199,7 +199,7 @@ export function SkillManager() {
                     catSkills.map(skill => (
                       <div 
                         key={skill.id}
-                        className="group relative flex items-center gap-1.5 bg-white border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
+                        className="group relative flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-slate-50 transition-colors"
                       >
                         {skill.name}
                         <button 

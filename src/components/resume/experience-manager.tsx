@@ -197,7 +197,7 @@ export function ExperienceManager() {
       </div>
 
       {experiences.length === 0 ? (
-        <Card className="bg-white/40 backdrop-blur-md border-white/20 border-dashed p-12 flex flex-col items-center justify-center text-center">
+        <Card className="bg-white border-white/20 border-dashed p-12 flex flex-col items-center justify-center text-center">
           <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium">No experience added yet</h3>
           <p className="text-muted-foreground max-w-sm">
@@ -329,7 +329,7 @@ export function ExperienceManager() {
                 control={form.control}
                 name="current"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white/50">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
