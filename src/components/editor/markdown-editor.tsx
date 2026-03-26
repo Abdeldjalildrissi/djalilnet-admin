@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { marked } from "marked"
 import DOMPurify from "isomorphic-dompurify"
+import { UploadButton } from "@/lib/uploadthing"
+import { ImagePlus, Loader2, Bold, Italic, Link as LinkIcon, Heading1 } from "lucide-react"
 import "@/styles/markdown.css" // Custom styles for the preview
 
 interface MarkdownEditorProps {
@@ -27,7 +29,7 @@ export function MarkdownEditor({
     if (content.type === "doc") return "/* This article was written in the Rich Text Editor and cannot be loaded into the Markdown Editor. Please switch modes. */\n"
     return ""
   })
-
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [htmlPreview, setHtmlPreview] = useState("")
 
   // Parse markdown to HTML and sanitize
@@ -48,6 +50,30 @@ export function MarkdownEditor({
       console.error("Markdown parsing error", e)
     }
   }, [onChange])
+
+  const insertAtCursor = useCallback((textToInsert: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) {
+      const newVal = markdown + textToInsert
+      setMarkdown(newVal)
+      updatePreview(newVal)
+      return
+    }
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const currentVal = textarea.value
+    
+    const newVal = currentVal.substring(0, start) + textToInsert + currentVal.substring(end)
+    setMarkdown(newVal)
+    updatePreview(newVal)
+    
+    // Set cursor position after the inserted text after a tick
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + textToInsert.length, start + textToInsert.length)
+    }, 0)
+  }, [markdown, updatePreview])
 
   // Initialize preview on mount
   useEffect(() => {
@@ -77,10 +103,93 @@ export function MarkdownEditor({
     >
       {/* Left: Input */}
       <div style={{ display: "flex", flexDirection: "column", borderRight: "1px solid #e2e8f0" }}>
-        <div style={{ padding: "0.75rem 1rem", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" }}>
-          <span style={{ fontSize: "0.8125rem", fontWeight: "600", color: "#64748b" }}>MARKDOWN EDITOR</span>
+        <div style={{ 
+          padding: "0.5rem 0.75rem", 
+          borderBottom: "1px solid #f1f5f9", 
+          background: "#f8fafc",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <button 
+              onClick={() => insertAtCursor("**text**")}
+              title="Bold"
+              style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", color: "#64748b", borderRadius: "4px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}
+            >
+              <Bold size={14} />
+            </button>
+            <button 
+              onClick={() => insertAtCursor("*text*")}
+              title="Italic"
+              style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", color: "#64748b", borderRadius: "4px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}
+            >
+              <Italic size={14} />
+            </button>
+            <button 
+              onClick={() => insertAtCursor("# ")}
+              title="Heading"
+              style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", color: "#64748b", borderRadius: "4px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}
+            >
+              <Heading1 size={14} />
+            </button>
+            <button 
+              onClick={() => {
+                const url = window.prompt("Enter URL:")
+                if (url) insertAtCursor(`[link](${url})`)
+              }}
+              title="Add Link"
+              style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", color: "#64748b", borderRadius: "4px" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}
+            >
+              <LinkIcon size={14} />
+            </button>
+          </div>
+          <UploadButton
+            endpoint="imageUploader"
+            onClientUploadComplete={(res) => {
+              if (res?.[0]) {
+                const url = res[0].url
+                const name = res[0].name
+                insertAtCursor(`\n![${name}](${url})\n`)
+              }
+            }}
+            appearance={{
+              button: {
+                height: "28px",
+                padding: "0 10px",
+                background: "white",
+                color: "#6366f1",
+                fontSize: "11px",
+                fontWeight: "600",
+                borderRadius: "6px",
+                border: "1px solid #e2e8f0",
+                cursor: "pointer",
+              },
+              allowedContent: { display: "none" }
+            }}
+            content={{
+              button({ ready, isUploading }) {
+                if (isUploading) return <Loader2 className="animate-spin" size={14} />;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <ImagePlus size={14} />
+                    <span>{ready ? "Insert Media" : "..."}</span>
+                  </div>
+                );
+              }
+            }}
+          />
         </div>
         <textarea
+          ref={textareaRef}
           value={markdown}
           onChange={handleChange}
           placeholder={placeholder}

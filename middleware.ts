@@ -8,16 +8,23 @@ export async function middleware(request: NextRequest) {
   // --- Rate Limiting Strategy ---
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || '127.0.0.1';
   
-  if (pathname.startsWith("/api/auth") || pathname === "/login") {
+  // Only rate-limit actual sign-in POST attempts — NOT page loads or session checks.
+  // Applying the limiter to GET /login or GET /api/auth/* drains the bucket on every
+  // navigation and triggers 429 before a single credential is submitted.
+  const isSignInAttempt =
+    request.method === "POST" &&
+    (pathname.startsWith("/api/auth/sign-in") || pathname.startsWith("/api/auth/email-password"));
+
+  if (isSignInAttempt) {
     try {
       const { success } = await authRateLimit.limit(ip);
-      if (!success) return NextResponse.json({ error: "Too many login attempts" }, { status: 429 });
-    } catch (e) { console.error("Ratelimit error:", e) }
-  } else if (pathname.startsWith("/api")) {
+      if (!success) return NextResponse.json({ error: "Too many login attempts. Please wait 15 minutes." }, { status: 429 });
+    } catch (e) { console.error("Auth ratelimit error:", e) }
+  } else if (pathname.startsWith("/api") && !pathname.startsWith("/api/auth")) {
     try {
       const { success } = await globalRateLimit.limit(ip);
       if (!success) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-    } catch (e) { console.error("Ratelimit error:", e) }
+    } catch (e) { console.error("Global ratelimit error:", e) }
   }
 
   // --- Auth Flow ---
