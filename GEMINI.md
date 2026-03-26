@@ -56,4 +56,7 @@ This file contains a growing ruleset that improves over time. **At session start
 17. [CODE] When increasing rate limits for security-sensitive paths (e.g., auth), document the reasoning and ensure it aligns with the expected user load and security posture.
 18. [CODE] Implement multi-layered title stripping for the blog: use regex-based stripping in API handlers (POST/PATCH) to clean the database, and `prose-h1:hidden` (or equivalent) in the frontend for visual safety.
 19. [PROCESS] Automatically append new technical learnings and user-requested constraints to `GEMINI.md` at the end of every significant task without being prompted.
-20. [STYLE] For long-form blog content, maintain a premium typography scale and layout: use `prose-xl` (20px) base, `md:prose-2xl` (24px) desktop, and `lg:text-[26px]` for large screens. Always bound content with `max-w-4xl mx-auto` to ensure optimal line length and centering.
+20. [UX] Premium typography for long-form content: Use `prose-xl` base, `lg:text-[26px]` for desktop, and bound width with `max-w-4xl mx-auto`. Normalize headings with `prose-h2:text-4xl` and `prose-h3:text-2xl` to ensure a balanced hierarchy and avoid disproportionate "zing" effects.
+21. [CODE] Follow Next.js 15+ metadata conventions for branding: place `icon.png`, `apple-icon.png`, and `opengraph-image.png` directly in `src/app/` to automate favicon and social sharing generation.
+22. [STYLE] For premium engineering branding, prefer textless, cinematic brand marks (e.g., Electromechanics + AI motifs) using Slate/Zinc dark-mode palettes and glassmorphism.
+23. [CODE] Explicitly remove legacy `favicon.ico` files when deploying modern PNG/SVG icons to ensure Next.js metadata resolution priorities are correctly respected.
