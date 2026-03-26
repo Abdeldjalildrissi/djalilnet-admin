@@ -207,7 +207,7 @@ export function ExperienceManager() {
       ) : (
         <div className="grid gap-4">
           {experiences.map((exp) => (
-            <Card key={exp.id} className="bg-white/40 backdrop-blur-md border-white/20 hover:shadow-lg transition-all group overflow-hidden">
+            <Card key={exp.id} className="bg-white border-white/20 hover:shadow-lg transition-all group overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-4">
@@ -264,7 +264,7 @@ export function ExperienceManager() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-lg border-white/20 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-white border-white/20 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingExp ? "Edit Experience" : "Add Experience"}</DialogTitle>
           </DialogHeader>

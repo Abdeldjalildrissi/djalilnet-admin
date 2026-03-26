@@ -179,7 +179,7 @@ export function SkillManager() {
           const Icon = cat.icon
           
           return (
-            <Card key={cat.key} className="bg-white/40 backdrop-blur-md border-white/20">
+            <Card key={cat.key} className="bg-white border-white/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -199,7 +199,7 @@ export function SkillManager() {
                     catSkills.map(skill => (
                       <div 
                         key={skill.id}
-                        className="group relative flex items-center gap-1.5 bg-white/60 border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
+                        className="group relative flex items-center gap-1.5 bg-white border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
                       >
                         {skill.name}
                         <button 
@@ -225,7 +225,7 @@ export function SkillManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
+        <DialogContent className="bg-white border-white/20">
           <DialogHeader>
             <DialogTitle>{editingSkill ? "Edit Skill" : "Add Skill"}</DialogTitle>
           </DialogHeader>

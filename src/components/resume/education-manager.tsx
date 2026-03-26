@@ -181,7 +181,7 @@ export function EducationManager() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {educations.map((edu) => (
-          <Card key={edu.id} className="bg-white/40 backdrop-blur-md border-white/20">
+          <Card key={edu.id} className="bg-white border-white/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -217,7 +217,7 @@ export function EducationManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
+        <DialogContent className="bg-white border-white/20">
           <DialogHeader>
             <DialogTitle>{editingEdu ? "Edit Education" : "Add Education"}</DialogTitle>
           </DialogHeader>
