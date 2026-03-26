@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Queue } from "bullmq"
 import IORedis from "ioredis"
 

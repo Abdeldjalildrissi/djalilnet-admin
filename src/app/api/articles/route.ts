@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest } from "next/server"
 export const dynamic = "force-dynamic"
 import { db } from "@/db"

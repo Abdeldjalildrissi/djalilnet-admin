@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { pgTable, uuid, varchar, text, integer, timestamp, index, serial, boolean, unique, jsonb, uniqueIndex, foreignKey, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 

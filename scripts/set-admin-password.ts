@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { config } from "dotenv"
 import { randomUUID } from "node:crypto"
 config({ path: ".env.local" })

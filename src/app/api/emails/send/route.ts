@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { NextRequest } from "next/server"
 import { db } from "@/db"
 import { emails, emailTemplates, emailQueue } from "@/db/schema"

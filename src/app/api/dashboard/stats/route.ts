@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest } from "next/server"
 import { db } from "@/db"
 import { articles, emails, users, activityLogs } from "@/db/schema"

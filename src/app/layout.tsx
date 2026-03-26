@@ -10,6 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://admin.djalilnet.com"),
   title: "djalilnet Admin",
   description: "Back-office administration platform for djalilnet.com",
 }

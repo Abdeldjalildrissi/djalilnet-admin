@@ -6,6 +6,7 @@ import { signOut } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "./sidebar-context"
+import Image from "next/image"
 import {
   LayoutDashboard,
   FileText,
@@ -94,18 +95,23 @@ export function Sidebar() {
               style={{
                 width: "32px",
                 height: "32px",
-                background: "linear-gradient(135deg, #3b82f6, #6366f1)",
                 borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "0.875rem",
-                fontWeight: "700",
-                color: "white",
-                flexShrink: 0
+                background: "#1e293b",
+                overflow: "hidden",
+                border: "1px solid #334155",
+                flexShrink: 0,
+                position: "relative"
               }}
             >
-              DJ
+              <Image
+                src="/brand/hero.png"
+                alt="logo"
+                fill
+                className="object-cover"
+              />
             </div>
             {showText && (
               <div className="fade-in">
@@ -170,14 +176,14 @@ export function Sidebar() {
               {group.label && !showText && <div style={{ height: "1px", background: "#1e293b", margin: "1rem 0.5rem" }} />}
               {group.items.map((item) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn("nav-item group", isActive(item.href) && "active")}
-                  style={{ 
-                    justifyContent: showText ? "flex-start" : "center",
-                    padding: showText ? "0.5rem 0.875rem" : "0.5rem 0",
-                    position: "relative"
-                  }}
+                   key={item.href}
+                   href={item.href}
+                   className={cn("nav-item group", isActive(item.href) && "active")}
+                   style={{ 
+                     justifyContent: showText ? "flex-start" : "center",
+                     padding: showText ? "0.5rem 0.875rem" : "0.5rem 0",
+                     position: "relative"
+                   }}
                 >
                   <item.icon style={{ width: "20px", height: "20px", flexShrink: 0 }} />
                   {showText ? (

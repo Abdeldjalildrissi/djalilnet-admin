@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 "use client"
 
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"

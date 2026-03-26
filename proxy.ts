@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 import { authRateLimit, globalRateLimit } from "@/lib/ratelimit"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // --- Rate Limiting Strategy ---
