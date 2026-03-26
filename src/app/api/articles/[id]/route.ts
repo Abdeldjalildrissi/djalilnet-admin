@@ -55,9 +55,11 @@ export async function PATCH(
   const wasPublished = existing.status === "published"
   const nowPublishing = parsed.data.status === "published"
 
-  const sanitizedHtml = parsed.data.contentHtml 
+  const rawHtml = parsed.data.contentHtml 
     ? sanitize(parsed.data.contentHtml) 
     : existing.contentHtml || ""
+  // Strip the first H1 tag if it exists (usually the title duplicated from markdown)
+  const sanitizedHtml = rawHtml.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "").trim()
   const readingTime = parsed.data.contentHtml 
     ? computeReadingTime(sanitizedHtml) 
     : existing.readingTime

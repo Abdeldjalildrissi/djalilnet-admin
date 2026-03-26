@@ -93,7 +93,9 @@ export async function POST(request: NextRequest) {
 
   const slug = parsed.data.slug || slugify(parsed.data.title)
 
-  const sanitizedHtml = parsed.data.contentHtml ? sanitize(parsed.data.contentHtml) : ""
+  const rawHtml = parsed.data.contentHtml ? sanitize(parsed.data.contentHtml) : ""
+  // Strip the first H1 tag if it exists (usually the title duplicated from markdown)
+  const sanitizedHtml = rawHtml.replace(/<h1[^>]*>[\s\S]*?<\/h1>/i, "").trim()
   const readingTime = computeReadingTime(sanitizedHtml)
 
   const [article] = await db

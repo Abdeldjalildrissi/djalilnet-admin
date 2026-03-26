@@ -54,3 +54,5 @@ This file contains a growing ruleset that improves over time. **At session start
 15. [UX] In the blog frontend, if double titles occur (template H1 + content H1), always strip the first H1 tag from the content HTML using a regex-based approach.
 16. [PROCESS] Always run `npm run build` in affected project directories before suggesting or performing a production deployment to verify build stability.
 17. [CODE] When increasing rate limits for security-sensitive paths (e.g., auth), document the reasoning and ensure it aligns with the expected user load and security posture.
+18. [CODE] Implement multi-layered title stripping for the blog: use regex-based stripping in API handlers (POST/PATCH) to clean the database, and `prose-h1:hidden` (or equivalent) in the frontend for visual safety.
+19. [PROCESS] Automatically append new technical learnings and user-requested constraints to `GEMINI.md` at the end of every significant task without being prompted.
