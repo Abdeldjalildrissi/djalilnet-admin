@@ -141,10 +141,11 @@ export async function generateResumePDF(): Promise<Buffer> {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
-    if (!res.ok) {
+    const contentType = res.headers.get("content-type");
+    if (!res.ok || (contentType && !contentType.includes("application/pdf"))) {
       const errorText = await res.text();
-      console.error("LaTeX Online Error:", errorText);
-      throw new Error("LaTeX Online compilation failed.");
+      console.error("LaTeX Compilation Error or non-PDF returned:", errorText);
+      throw new Error(`LaTeX Online compilation failed: ${errorText.substring(0, 100)}...`);
     }
 
     return Buffer.from(await res.arrayBuffer());
