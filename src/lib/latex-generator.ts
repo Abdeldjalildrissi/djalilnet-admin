@@ -111,16 +111,12 @@ export async function generateResumePDF(): Promise<Buffer> {
     certificationsLatex = "\\section*{Certificates and Attestation}\n\\begin{itemize}[label=$\\bullet$]\n";
     for (const cert of certs) {
       const name = escapeLatex(cert.name);
-      const org = escapeLatex(cert.organization);
-      const date = cert.issueDate ? escapeLatex(cert.issueDate).replace(/–/g, "--") : "";
-      const url = cert.credentialUrl ? cert.credentialUrl : "";
+      const issuer = escapeLatex(cert.issuer);
+      const date = cert.date ? escapeLatex(cert.date).replace(/–/g, "--") : "";
       const dateStr = date ? `(${date})` : "";
       
-      let certLine = `\\item \\textbf{${name} --- ${org}} \\hfill \\textit{${dateStr}}\n`;
-      if (url) {
-        // Safe link injection
-        certLine = `\\item \\textbf{\\href{${url}}{${name}} --- ${org}} \\hfill \\textit{${dateStr}}\n`;
-      }
+      let certLine = `\\item \\textbf{${name} --- ${issuer}} \\hfill \\textit{${dateStr}}\n`;
+      // No URL field exists currently in schema
       certificationsLatex += certLine;
     }
     certificationsLatex += "\\end{itemize}\n";
