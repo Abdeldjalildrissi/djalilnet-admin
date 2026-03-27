@@ -51,11 +51,11 @@ export async function generateResumePDF(): Promise<Buffer> {
 
   try {
     templateContent = fs.readFileSync(templatePath, "utf-8")
-  } catch (e) {
+  } catch {
     // Attempt relative to nextjs root if path fails
     try {
       templateContent = fs.readFileSync(path.join(process.cwd(), "cv-latex.txt"), "utf-8")
-    } catch(err) {
+    } catch {
       throw new Error(`Could not find cv-latex.txt template at path ${templatePath}. Ensure it is present.`)
     }
   }
@@ -108,7 +108,7 @@ export async function generateResumePDF(): Promise<Buffer> {
     // Cleanup Temp files
     try {
       spawnSync("rm", [tmpTexFile, pdfFile, tmpTexFile.replace(".tex", ".log"), tmpTexFile.replace(".tex", ".aux")])
-    } catch(e) {}
+    } catch {}
     
     return pdfBuffer
   }

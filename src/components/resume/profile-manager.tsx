@@ -218,7 +218,11 @@ export function ProfileManager() {
               )}
             />
 
-            <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90 text-white">
+            <Button 
+              type="submit" 
+              disabled={saving} 
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0 px-8"
+            >
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

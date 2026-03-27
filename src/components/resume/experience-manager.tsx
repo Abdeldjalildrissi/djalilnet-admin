@@ -36,8 +36,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { 
-  Briefcase, 
-  Calendar, 
+  Briefcase,
+  Calendar,
   ChevronRight, 
   Loader2, 
   MapPin, 
@@ -45,7 +45,9 @@ import {
   Trash2, 
   Pencil,
   GripVertical,
-  Download
+  Download,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react"
 
 import {
@@ -79,7 +81,23 @@ const experienceSchema = z.object({
 
 type Experience = z.infer<typeof experienceSchema>
 
-function SortableExperienceCard({ exp, handleEdit, onDelete }: { exp: Experience, handleEdit: (exp: Experience) => void, onDelete: (id: string) => void }) {
+function SortableExperienceCard({ 
+  exp, 
+  handleEdit, 
+  onDelete, 
+  onMoveUp, 
+  onMoveDown, 
+  isFirst, 
+  isLast 
+}: { 
+  exp: Experience, 
+  handleEdit: (exp: Experience) => void, 
+  onDelete: (id: string) => void,
+  onMoveUp?: () => void,
+  onMoveDown?: () => void,
+  isFirst?: boolean,
+  isLast?: boolean
+}) {
   const {
     attributes,
     listeners,
@@ -113,14 +131,34 @@ function SortableExperienceCard({ exp, handleEdit, onDelete }: { exp: Experience
               </CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2 relative z-10">
+          <div className="flex items-center gap-1 relative z-10">
+            <div className="flex flex-col gap-0.5 mr-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 p-0" 
+                disabled={isFirst}
+                onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+              >
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 p-0" 
+                disabled={isLast}
+                onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+              >
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </div>
             <Button variant="ghost" size="icon" onClick={() => handleEdit(exp)}>
               <Pencil className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(exp.id!); }}>
               <Trash2 className="h-4 w-4" />
             </Button>
-            <div {...attributes} {...listeners} className="cursor-grab hover:bg-muted p-2 rounded flex items-center justify-center">
+            <div {...attributes} {...listeners} className="cursor-grab hover:bg-muted p-2 rounded flex items-center justify-center ml-2">
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
@@ -189,6 +227,28 @@ export function ExperienceManager() {
   useEffect(() => {
     fetchExperiences()
   }, [])
+
+  async function handleMove(id: string, direction: "up" | "down") {
+    const index = experiences.findIndex(e => e.id === id)
+    if (direction === "up" && index === 0) return
+    if (direction === "down" && index === experiences.length - 1) return
+    
+    const newIndex = direction === "up" ? index - 1 : index + 1
+    const newOrder = arrayMove(experiences, index, newIndex)
+    setExperiences(newOrder)
+    
+    try {
+      const payload = newOrder.map((exp, idx) => ({ id: exp.id, order: idx }))
+      await fetch("/api/profile/experiences/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: payload })
+      })
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save order." })
+      fetchExperiences()
+    }
+  }
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -319,11 +379,18 @@ export function ExperienceManager() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={() => window.open("/api/resume/download", "_blank")}>
+        <Button 
+          variant="default" 
+          onClick={() => window.open("/api/resume/download", "_blank")}
+          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-md shadow-emerald-900/10 transition-all active:scale-95 border-0"
+        >
           <Download className="mr-2 h-4 w-4" />
           Download PDF (LaTeX)
         </Button>
-        <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
+        <Button 
+          onClick={handleAdd} 
+          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Experience
         </Button>
@@ -348,8 +415,17 @@ export function ExperienceManager() {
               items={experiences.map(e => e.id!)}
               strategy={verticalListSortingStrategy}
             >
-              {experiences.map((exp) => (
-                <SortableExperienceCard key={exp.id} exp={exp} handleEdit={handleEdit} onDelete={onDelete} />
+              {experiences.map((exp, idx) => (
+                <SortableExperienceCard 
+                  key={exp.id} 
+                  exp={exp} 
+                  handleEdit={handleEdit} 
+                  onDelete={onDelete}
+                  onMoveUp={() => handleMove(exp.id!, "up")}
+                  onMoveDown={() => handleMove(exp.id!, "down")}
+                  isFirst={idx === 0}
+                  isLast={idx === experiences.length - 1}
+                />
               ))}
             </SortableContext>
           </div>
@@ -357,7 +433,7 @@ export function ExperienceManager() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-lg border-white/20 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-lg border-white/20 max-h-[90vh] overflow-y-auto fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl z-[100]">
           <DialogHeader>
             <DialogTitle>{editingExp ? "Edit Experience" : "Add Experience"}</DialogTitle>
           </DialogHeader>
@@ -459,9 +535,13 @@ export function ExperienceManager() {
                 <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving}>
+                <Button 
+                  type="submit" 
+                  disabled={saving} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0"
+                >
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingExp ? "Update" : "Create"}
+                  {editingExp ? "Update Experience" : "Create Experience"}
                 </Button>
               </div>
             </form>

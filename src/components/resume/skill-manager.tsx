@@ -43,7 +43,9 @@ import {
   Trash2, 
   Settings,
   Globe,
-  Star
+  Star,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 
 const skillSchema = z.object({
@@ -145,6 +147,39 @@ export function SkillManager() {
     }
   }
 
+  async function handleMove(id: string, direction: "prev" | "next") {
+    const skill = skills.find(s => s.id === id)
+    if (!skill) return
+    const categorySkills = skills.filter(s => s.category === skill.category)
+    const index = categorySkills.findIndex(s => s.id === id)
+    
+    if (direction === "prev" && index === 0) return
+    if (direction === "next" && index === categorySkills.length - 1) return
+    
+    const newIndex = direction === "prev" ? index - 1 : index + 1
+    const newCategoryOrder = [...categorySkills]
+    const [moved] = newCategoryOrder.splice(index, 1)
+    newCategoryOrder.splice(newIndex, 0, moved)
+    
+    // Update the overarching skills list with new orders for this category
+    const otherSkills = skills.filter(s => s.category !== skill.category)
+    const updatedCategorySkills = newCategoryOrder.map((s, idx) => ({ ...s, order: idx }))
+    const newSkills = [...otherSkills, ...updatedCategorySkills]
+    setSkills(newSkills)
+    
+    try {
+      const payload = updatedCategorySkills.map(s => ({ id: s.id, order: s.order }))
+      await fetch("/api/profile/skills/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: payload })
+      })
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save skill order." })
+      fetchSkills()
+    }
+  }
+
   async function onDelete(id: string) {
     if (!confirm("Are you sure you want to delete this skill?")) return
     try {
@@ -187,7 +222,12 @@ export function SkillManager() {
                   </div>
                   <CardTitle className="text-sm font-semibold">{cat.label}</CardTitle>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => handleAdd(cat.key)}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleAdd(cat.key)} 
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </CardHeader>
@@ -196,12 +236,26 @@ export function SkillManager() {
                   {catSkills.length === 0 ? (
                     <p className="text-xs text-muted-foreground italic">No skills added</p>
                   ) : (
-                    catSkills.map(skill => (
+                    catSkills.map((skill, idx) => (
                       <div 
                         key={skill.id}
-                        className="group relative flex items-center gap-1.5 bg-white/60 border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
+                        className="group relative flex items-center gap-1 bg-white/60 border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
                       >
+                        <button 
+                          onClick={() => handleMove(skill.id!, "prev")}
+                          disabled={idx === 0}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity disabled:hidden"
+                        >
+                          <ChevronLeft className="h-3 w-3" />
+                        </button>
                         {skill.name}
+                        <button 
+                          onClick={() => handleMove(skill.id!, "next")}
+                          disabled={idx === catSkills.length - 1}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity disabled:hidden"
+                        >
+                          <ChevronRight className="h-3 w-3" />
+                        </button>
                         <button 
                           onClick={() => handleEdit(skill)}
                           className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
@@ -225,7 +279,7 @@ export function SkillManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-lg border-white/20 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl z-[100]">
           <DialogHeader>
             <DialogTitle>{editingSkill ? "Edit Skill" : "Add Skill"}</DialogTitle>
           </DialogHeader>
@@ -270,9 +324,13 @@ export function SkillManager() {
                 <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving}>
+                <Button 
+                  type="submit" 
+                  disabled={saving} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0"
+                >
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingSkill ? "Update" : "Create"}
+                  {editingSkill ? "Update Skill" : "Create Skill"}
                 </Button>
               </DialogFooter>
             </form>

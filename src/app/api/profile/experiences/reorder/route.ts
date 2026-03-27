@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { experiences } from "@/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { requireRole } from "@/lib/auth-helpers"
 
 export async function PUT(request: NextRequest) {

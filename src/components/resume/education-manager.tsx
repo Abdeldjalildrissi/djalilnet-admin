@@ -36,7 +36,9 @@ import {
   Plus, 
   Trash2, 
   Pencil,
-  School
+  School,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react"
 
 const educationSchema = z.object({
@@ -138,6 +140,30 @@ export function EducationManager() {
     }
   }
 
+  async function handleMove(id: string, direction: "up" | "down") {
+    const index = educations.findIndex(e => e.id === id)
+    if (direction === "up" && index === 0) return
+    if (direction === "down" && index === educations.length - 1) return
+    
+    const newIndex = direction === "up" ? index - 1 : index + 1
+    const newOrder = [...educations]
+    const [moved] = newOrder.splice(index, 1)
+    newOrder.splice(newIndex, 0, moved)
+    setEducations(newOrder)
+    
+    try {
+      const payload = newOrder.map((edu, idx) => ({ id: edu.id, order: idx }))
+      await fetch("/api/profile/educations/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: payload })
+      })
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save order." })
+      fetchEducations()
+    }
+  }
+
   async function onDelete(id: string) {
     if (!confirm("Are you sure you want to delete this education entry?")) return
 
@@ -174,14 +200,17 @@ export function EducationManager() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
+        <Button 
+          onClick={handleAdd} 
+          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Education
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {educations.map((edu) => (
+        {educations.map((edu, idx) => (
           <Card key={edu.id} className="bg-white/40 backdrop-blur-md border-white/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="flex items-center gap-3">
@@ -193,6 +222,26 @@ export function EducationManager() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                <div className="flex flex-col gap-0.5 mr-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 p-0" 
+                    disabled={idx === 0}
+                    onClick={() => handleMove(edu.id!, "up")}
+                  >
+                    <ChevronUp className="h-3 w-3" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 p-0" 
+                    disabled={idx === educations.length - 1}
+                    onClick={() => handleMove(edu.id!, "down")}
+                  >
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => handleEdit(edu)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -218,7 +267,7 @@ export function EducationManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-lg border-white/20 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl z-[100]">
           <DialogHeader>
             <DialogTitle>{editingEdu ? "Edit Education" : "Add Education"}</DialogTitle>
           </DialogHeader>
@@ -267,9 +316,13 @@ export function EducationManager() {
                 <Button variant="outline" type="button" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving}>
+                <Button 
+                  type="submit" 
+                  disabled={saving} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/10 transition-all active:scale-95 border-0"
+                >
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingEdu ? "Update" : "Create"}
+                  {editingEdu ? "Update Education" : "Create Education"}
                 </Button>
               </DialogFooter>
             </form>
