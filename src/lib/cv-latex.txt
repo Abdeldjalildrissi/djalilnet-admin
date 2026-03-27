@@ -1,0 +1,153 @@
+\documentclass[11pt, a4paper]{article}
+
+% Required Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[left=1cm, right=1cm, top=1cm, bottom=1cm]{geometry} 
+\usepackage{graphicx}   
+\usepackage{xcolor}     
+\usepackage{paracol}    
+\usepackage{enumitem}   
+\usepackage{mathptmx}   
+\usepackage{titlesec}   
+\usepackage{hyperref}   
+\usepackage{ragged2e}   
+
+% Global Formatting
+\setlength{\parindent}{0pt} 
+\setlength{\parskip}{0.5em} 
+\linespread{1.1}            
+
+% Column Separation
+\columnratio{0.30}          
+\setlength{\columnsep}{2em} 
+\setlength{\columnseprule}{2pt} 
+
+% Custom commands
+\newcommand{\resumetitle}[1]{
+    \begin{center}
+        \textbf{\huge #1}
+    \end{center}
+}
+
+\newcommand{\resumename}[1]{
+    \begin{center}
+        \textbf{\LARGE #1}
+    \end{center}
+}
+
+% Format for Main Section Headers (Right Column)
+\titleformat{\section}
+  {\large\bfseries} 
+  {}                
+  {0em}             
+  {\underline}      
+
+\setcounter{secnumdepth}{0}
+
+% List settings
+\setlist[itemize]{leftmargin=*, parsep=0pt, itemsep=2pt, topsep=2pt}
+
+\begin{document}
+
+\begin{paracol}{2}
+
+    % ================= LEFT COLUMN (Sidebar) =================
+    \raggedright 
+    
+    % Photo Area (Commented out for portability)
+    % \begin{center}
+    %     \includegraphics[width=0.8\linewidth, height=0.8\linewidth, keepaspectratio]{photo.jpg} 
+    % \end{center}
+
+    % Contact Header
+    \vspace{1em}
+    \begin{center}
+        \textbf{\large Contact}
+    \end{center}
+    
+    \begin{itemize}[label=-]
+        \item Mob: <<MOB>>
+        \item Mail: \\ 
+        {\footnotesize \href{mailto:<<MAIL>>}{<<MAIL>>}}
+        \item Address: <<ADDRESS>>
+    \end{itemize}
+
+    \vspace{1em}
+    \begin{center}
+        \textbf{\large Soft-skills}
+    \end{center}
+    \begin{itemize}[label=-]
+        <<SOFT_SKILLS>>
+    \end{itemize}
+
+    \vspace{1em}
+    \begin{center}
+        \textbf{\large Software}
+    \end{center}
+    \begin{itemize}[label=-]
+        <<SOFTWARE_SKILLS>>
+    \end{itemize}
+
+    \vspace{1em}
+    \begin{center}
+        \textbf{\large Languages}
+    \end{center}
+    \begin{itemize}[label=-]
+        <<LANGUAGE_SKILLS>>
+    \end{itemize}
+
+    \vspace{1em}
+    \begin{center}
+        \textbf{\large Hobbies}
+    \end{center}
+    \begin{itemize}[label=-]
+        \item Travel (Ready to deploy)
+        \item Reading
+    \end{itemize}
+
+    \switchcolumn
+    % ================= RIGHT COLUMN (Main Content) =================
+    
+    \justify 
+
+    % Adjusted Title for the Job
+    \resumetitle{<<ROLE>>}
+    \resumename{<<NAME>>}
+
+    \vspace{0.5em}
+    
+    % Tailored Summary
+    <<SUMMARY>>
+
+    \section{Professional experience:}
+
+    <<EXPERIENCES_LIST>>
+
+    \section{Certificates and Attestation}
+    \begin{itemize}[label=$\bullet$]
+        \item \textbf{Well Control Certification – IWCF} (Apr 2023 )| Online
+        \begin{itemize}[label=$\circ$]
+            \item Focus: Industrial Safety Standards, Pressure Control, and Operational Procedures in hazardous environments.
+        \end{itemize}
+        
+        \item \textbf{Well Intervention Training – IFP} (Oct 2023 – Jan 2024) | Ouargla, Algeria
+        \begin{itemize}[label=$\circ$]
+            \item Focus: Equipment Maintenance, Wireline Operations, and HSE Practices.
+        \end{itemize}
+
+        \item \textbf{McKinsey Forward Program} (Apr 2023 – Aug 2023) | Online
+        \begin{itemize}[label=$\circ$]
+            \item Focus: Problem Solving, Effective Communication, and Adaptability.
+        \end{itemize}
+    \end{itemize}
+
+    \section{Education:}
+    
+    \begin{itemize}[label=$\bullet$]
+        <<EDUCATION_LIST>>
+    \end{itemize}
+
+\end{paracol}
+
+\end{document}

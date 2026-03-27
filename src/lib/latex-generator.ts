@@ -5,24 +5,45 @@ import { experiences, educations, skills, siteSettings } from "@/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 
 /**
- * Escapes special LaTeX characters in strings
+ * Escapes special LaTeX characters for use in TEXT content only.
+ * DO NOT use this for URLs (mailto:, href arguments) or raw LaTeX commands.
+ *
+ * Uses a two-pass approach:
+ *  Pass 1: Replace characters with safe placeholders (no LaTeX chars)
+ *  Pass 2: Replace placeholders with correct LaTeX sequences
  */
 function escapeLatex(text: string): string {
   if (!text) return "";
-  return text
-    .replace(/\\/g, "\\textbackslash{}")
-    .replace(/&/g, "\\&")
-    .replace(/%/g, "\\%")
-    .replace(/\$/g, "\\$")
-    .replace(/#/g, "\\#")
-    .replace(/_/g, "\\_")
-    .replace(/\{/g, "\\{")
-    .replace(/\}/g, "\\}")
-    .replace(/~/g, "\\textasciitilde{}")
-    .replace(/\^/g, "\\textasciicircum{}")
-    .replace(/\|/g, "\\textbar{}")
-    .replace(/</g, "\\textless{}")
-    .replace(/>/g, "\\textgreater{}");
+
+  // Map of character → LaTeX command (using unique placeholders first)
+  const replacements: [RegExp, string, string][] = [
+    [/\\/g, "BKSL_PLACEHOLDER", "\\textbackslash{}"],
+    [/\{/g, "LBRACE_PLACEHOLDER", "\\{"],
+    [/\}/g, "RBRACE_PLACEHOLDER", "\\}"],
+    [/&/g, "AMP_PLACEHOLDER", "\\&"],
+    [/\$/g, "DOLLAR_PLACEHOLDER", "\\$"],
+    [/%/g, "PERCENT_PLACEHOLDER", "\\%"],
+    [/#/g, "HASH_PLACEHOLDER", "\\#"],
+    [/_/g, "UNDER_PLACEHOLDER", "\\_"],
+    [/~/g, "TILDE_PLACEHOLDER", "\\textasciitilde{}"],
+    [/\^/g, "CARET_PLACEHOLDER", "\\textasciicircum{}"],
+    [/\|/g, "PIPE_PLACEHOLDER", "\\textbar{}"],
+    [/</g, "LT_PLACEHOLDER", "\\textless{}"],
+    [/>/g, "GT_PLACEHOLDER", "\\textgreater{}"],
+  ];
+
+  // Pass 1: replace all special chars with unique placeholders
+  let result = text;
+  for (const [regex, placeholder] of replacements) {
+    result = result.replace(regex, placeholder);
+  }
+
+  // Pass 2: replace all placeholders with LaTeX sequences
+  for (const [, placeholder, latexCmd] of replacements) {
+    result = result.split(placeholder).join(latexCmd);
+  }
+
+  return result;
 }
 
 export async function generateResumePDF(): Promise<Buffer> {
@@ -88,38 +109,59 @@ export async function generateResumePDF(): Promise<Buffer> {
     .map((s) => `\\item ${escapeLatex(s.name)}`)
     .join("\n");
 
-  // 3. Read template and inject blocks
-  const templatePath = path.join(process.cwd(), "..", "cv-latex.txt");
-  let templateContent = "";
+  // 3. Read template — try multiple candidate paths for robustness across envs
+  const candidates = [
+    path.join(process.cwd(), "src", "lib", "cv-latex.txt"),
+    path.join(process.cwd(), "cv-latex.txt"),
+    path.join(process.cwd(), "..", "cv-latex.txt"),
+  ];
 
-  try {
-    templateContent = fs.readFileSync(templatePath, "utf-8");
-  } catch {
+  let templateContent = "";
+  for (const candidate of candidates) {
     try {
-      templateContent = fs.readFileSync(
-        path.join(process.cwd(), "cv-latex.txt"),
-        "utf-8",
-      );
+      templateContent = fs.readFileSync(candidate, "utf-8");
+      break;
     } catch {
-      throw new Error(`Could not find cv-latex.txt template.`);
+      // try next candidate
     }
   }
 
-  // Inject Data - Using replaceAll to cover multiple occurrences (like in href)
+  if (!templateContent) {
+    throw new Error(
+      `Could not find cv-latex.txt. Tried paths: ${candidates.join(", ")}`
+    );
+  }
+
+  // 4. Prepare substitution values
+  // IMPORTANT: Email is used inside \href{mailto:email}{email}.
+  // LaTeX href URL arguments must NOT have characters like _ escaped to \_.
+  // We use the RAW email value here, not escaped through escapeLatex().
+  const rawEmail =
+    (personalInfo.email as string) || "abdeldjalildrissi@gmail.com";
+  const rawPhone = (personalInfo.phone as string) || "+213 790750708";
+  const rawName = (personalInfo.name as string) || "DRISSI Abdeldjalil";
+  const rawRole =
+    (personalInfo.role as string) || "Electromechanical Engineer";
+  const rawAddress = (personalInfo.location as string) || "Algeria";
+  const rawSummary = (personalInfo.tagline as string) || "";
+
+  // 5. Inject data — replaceAll ensures EVERY occurrence is replaced
   const compiledTex = templateContent
-    .replaceAll("<<NAME>>", escapeLatex((personalInfo.name as string) || "DRISSI Abdeldjalil"))
-    .replaceAll("<<ROLE>>", escapeLatex((personalInfo.role as string) || "Electromechanical Engineer"))
-    .replaceAll("<<MOB>>", escapeLatex((personalInfo.phone as string) || "+213 790750708"))
-    .replaceAll("<<MAIL>>", escapeLatex((personalInfo.email as string) || "abdeldjalildrissi@gmail.com"))
-    .replaceAll("<<ADDRESS>>", escapeLatex((personalInfo.location as string) || "Algeria"))
-    .replaceAll("<<SUMMARY>>", escapeLatex((personalInfo.tagline as string) || ""))
+    .replaceAll("<<NAME>>", escapeLatex(rawName))
+    .replaceAll("<<ROLE>>", escapeLatex(rawRole))
+    .replaceAll("<<MOB>>", escapeLatex(rawPhone))
+    // Email: raw (unescaped) — the template uses it in \href{mailto:...}{...}
+    .replaceAll("<<MAIL>>", rawEmail)
+    .replaceAll("<<ADDRESS>>", escapeLatex(rawAddress))
+    .replaceAll("<<SUMMARY>>", escapeLatex(rawSummary))
     .replaceAll("<<SOFT_SKILLS>>", softSkills)
     .replaceAll("<<SOFTWARE_SKILLS>>", softwareSkills)
     .replaceAll("<<LANGUAGE_SKILLS>>", languageSkills)
     .replaceAll("<<EXPERIENCES_LIST>>", experiencesLatex)
     .replaceAll("<<EDUCATION_LIST>>", educationLatex);
 
-    // 4. Compile via TexLive.net API (Robust for Serverless/Vercel)
+  // 6. Compile via TexLive.net cloud LaTeX API
+  let res: Response;
   try {
     const formData = new FormData();
     formData.append("filecontents[]", compiledTex);
@@ -127,26 +169,26 @@ export async function generateResumePDF(): Promise<Buffer> {
     formData.append("engine", "pdflatex");
     formData.append("return", "pdf");
 
-    const res = await fetch("https://texlive.net/cgi-bin/latexcgi", {
+    res = await fetch("https://texlive.net/cgi-bin/latexcgi", {
       method: "POST",
       body: formData,
     });
-
-    const contentType = res.headers.get("content-type");
-    if (!res.ok || (contentType && !contentType.includes("application/pdf"))) {
-      const errorText = await res.text();
-      console.error("LaTeX Compilation Error or non-PDF returned:", errorText);
-      throw new Error(`LaTeX Online compilation failed: ${errorText.substring(0, 100)}...`);
-    }
-
-    return Buffer.from(await res.arrayBuffer());
-  } catch (err) {
-    console.error("PDF Generation Fallback Triggered:", err);
-    // Fallback: return the existing static PDF if API fails
-    const fallbackPath = path.join(process.cwd(), "public", "resume.pdf");
-    if (fs.existsSync(fallbackPath)) {
-      return fs.readFileSync(fallbackPath);
-    }
-    throw err;
+  } catch (networkErr) {
+    throw new Error(
+      `Network error reaching texlive.net: ${(networkErr as Error).message}`
+    );
   }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!res.ok || !contentType.includes("application/pdf")) {
+    const errorText = await res.text();
+    // Show start + end of TeX log for maximum debug signal
+    const snippet =
+      errorText.length > 2000
+        ? `${errorText.slice(0, 600)}\n\n[...truncated...]\n\n${errorText.slice(-1200)}`
+        : errorText;
+    throw new Error(`LaTeX compilation failed.\n\n${snippet}`);
+  }
+
+  return Buffer.from(await res.arrayBuffer());
 }
