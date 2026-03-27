@@ -1,35 +1,40 @@
 import fs from "fs";
 import path from "path";
 import { db } from "@/db";
-import { experiences, educations, skills, siteSettings } from "@/db/schema";
+import {
+  experiences,
+  educations,
+  certifications,
+  skills,
+  siteSettings,
+} from "@/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 
 /**
  * Escapes special LaTeX characters for use in TEXT content only.
  * DO NOT use this for URLs (mailto:, href arguments) or raw LaTeX commands.
  *
- * Uses a two-pass approach:
- *  Pass 1: Replace characters with safe placeholders (no LaTeX chars)
- *  Pass 2: Replace placeholders with correct LaTeX sequences
+ * Uses a two-pass approach with safe placeholders (no underscores or special chars).
+ * This prevents double-escaping and substring corruption.
  */
 function escapeLatex(text: string): string {
   if (!text) return "";
 
-  // Map of character → LaTeX command (using unique placeholders first)
+  // Map of character → LaTeX command (using unique placeholders with NO underscores)
   const replacements: [RegExp, string, string][] = [
-    [/\\/g, "BKSL_PLACEHOLDER", "\\textbackslash{}"],
-    [/\{/g, "LBRACE_PLACEHOLDER", "\\{"],
-    [/\}/g, "RBRACE_PLACEHOLDER", "\\}"],
-    [/&/g, "AMP_PLACEHOLDER", "\\&"],
-    [/\$/g, "DOLLAR_PLACEHOLDER", "\\$"],
-    [/%/g, "PERCENT_PLACEHOLDER", "\\%"],
-    [/#/g, "HASH_PLACEHOLDER", "\\#"],
-    [/_/g, "UNDER_PLACEHOLDER", "\\_"],
-    [/~/g, "TILDE_PLACEHOLDER", "\\textasciitilde{}"],
-    [/\^/g, "CARET_PLACEHOLDER", "\\textasciicircum{}"],
-    [/\|/g, "PIPE_PLACEHOLDER", "\\textbar{}"],
-    [/</g, "LT_PLACEHOLDER", "\\textless{}"],
-    [/>/g, "GT_PLACEHOLDER", "\\textgreater{}"],
+    [/\\/g, "BKSLPH", "\\textbackslash{}"],
+    [/\{/g, "LBRACEPH", "\\{"],
+    [/\}/g, "RBRACEPH", "\\}"],
+    [/&/g, "AMPPH", "\\&"],
+    [/\$/g, "DOLLARPH", "\\$"],
+    [/%/g, "PERCENTPH", "\\%"],
+    [/#/g, "HASHPH", "\\#"],
+    [/_/g, "UNDERPH", "\\_"],
+    [/~/g, "TILDEPH", "\\textasciitilde{}"],
+    [/\^/g, "CARETPH", "\\textasciicircum{}"],
+    [/\|/g, "PIPEPH", "\\textbar{}"],
+    [/</g, "LTPH", "\\textless{}"],
+    [/>/g, "GTPH", "\\textgreater{}"],
   ];
 
   // Pass 1: replace all special chars with unique placeholders
@@ -48,12 +53,15 @@ function escapeLatex(text: string): string {
 
 export async function generateResumePDF(): Promise<Buffer> {
   // 1. Fetch ALL Data
-  const [exps, edus, allSkills, settings] = await Promise.all([
+  const [exps, edus, certs, allSkills, settings] = await Promise.all([
     db.query.experiences.findMany({
       orderBy: [asc(experiences.order), desc(experiences.createdAt)],
     }),
     db.query.educations.findMany({
       orderBy: [asc(educations.order)],
+    }),
+    db.query.certifications.findMany({
+      orderBy: [asc(certifications.order)],
     }),
     db.query.skills.findMany({
       orderBy: [asc(skills.order)],
@@ -75,7 +83,9 @@ export async function generateResumePDF(): Promise<Buffer> {
     const period = escapeLatex(exp.period).replace(/–/g, "--");
     const location = exp.location ? escapeLatex(exp.location) : "";
 
-    const titleLine = `\\textbf{${role} \\textbar{} ${company} (${period}) ${location}}\n`;
+    // Fix for Margin Bleed: Do NOT wrap the entire line in \textbf{...}
+    // We split it so LaTeX can wrap naturally and use \hfill to push date/location right
+    const titleLine = `\\noindent\\textbf{${role}} \\textbar{} ${company} \\hfill \\textit{${period} --- ${location}}\n`;
     let bulletsLatex = "\\begin{itemize}[label=$\\bullet$]\n";
     if (Array.isArray(exp.bullets)) {
       exp.bullets.forEach((bullet: string) => {
@@ -92,7 +102,28 @@ export async function generateResumePDF(): Promise<Buffer> {
     const degree = escapeLatex(edu.degree);
     const school = escapeLatex(edu.school);
     const period = escapeLatex(edu.period).replace(/–/g, "--");
-    educationLatex += `\\item \\textbf{${degree}} (${period}) \\textbar{} ${school}\n`;
+    educationLatex += `\\item \\textbf{${degree}} \\hfill \\textit{${period}} \\\\ ${school}\n`;
+  }
+
+  // Certifications
+  let certificationsLatex = "";
+  if (certs && certs.length > 0) {
+    certificationsLatex = "\\section*{Certificates and Attestation}\n\\begin{itemize}[label=$\\bullet$]\n";
+    for (const cert of certs) {
+      const name = escapeLatex(cert.name);
+      const org = escapeLatex(cert.organization);
+      const date = cert.issueDate ? escapeLatex(cert.issueDate).replace(/–/g, "--") : "";
+      const url = cert.credentialUrl ? cert.credentialUrl : "";
+      const dateStr = date ? `(${date})` : "";
+      
+      let certLine = `\\item \\textbf{${name} --- ${org}} \\hfill \\textit{${dateStr}}\n`;
+      if (url) {
+        // Safe link injection
+        certLine = `\\item \\textbf{\\href{${url}}{${name}} --- ${org}} \\hfill \\textit{${dateStr}}\n`;
+      }
+      certificationsLatex += certLine;
+    }
+    certificationsLatex += "\\end{itemize}\n";
   }
 
   // Skills grouped by category
@@ -109,7 +140,10 @@ export async function generateResumePDF(): Promise<Buffer> {
     .map((s) => `\\item ${escapeLatex(s.name)}`)
     .join("\n");
 
-  // 3. Read template — try multiple candidate paths for robustness across envs
+  // Since there is no Hobbies table, we safely omit it.
+  const hobbiesSection = "";
+
+  // 3. Read template
   const candidates = [
     path.join(process.cwd(), "src", "lib", "cv-latex.txt"),
     path.join(process.cwd(), "cv-latex.txt"),
@@ -133,9 +167,6 @@ export async function generateResumePDF(): Promise<Buffer> {
   }
 
   // 4. Prepare substitution values
-  // IMPORTANT: Email is used inside \href{mailto:email}{email}.
-  // LaTeX href URL arguments must NOT have characters like _ escaped to \_.
-  // We use the RAW email value here, not escaped through escapeLatex().
   const rawEmail =
     (personalInfo.email as string) || "abdeldjalildrissi@gmail.com";
   const rawPhone = (personalInfo.phone as string) || "+213 790750708";
@@ -145,7 +176,7 @@ export async function generateResumePDF(): Promise<Buffer> {
   const rawAddress = (personalInfo.location as string) || "Algeria";
   const rawSummary = (personalInfo.tagline as string) || "";
 
-  // 5. Inject data — replaceAll ensures EVERY occurrence is replaced
+  // 5. Inject data
   const compiledTex = templateContent
     .replaceAll("<<NAME>>", escapeLatex(rawName))
     .replaceAll("<<ROLE>>", escapeLatex(rawRole))
@@ -157,7 +188,9 @@ export async function generateResumePDF(): Promise<Buffer> {
     .replaceAll("<<SOFT_SKILLS>>", softSkills)
     .replaceAll("<<SOFTWARE_SKILLS>>", softwareSkills)
     .replaceAll("<<LANGUAGE_SKILLS>>", languageSkills)
+    .replaceAll("<<HOBBIES_SECTION>>", hobbiesSection)
     .replaceAll("<<EXPERIENCES_LIST>>", experiencesLatex)
+    .replaceAll("<<CERTIFICATES_SECTION>>", certificationsLatex)
     .replaceAll("<<EDUCATION_LIST>>", educationLatex);
 
   // 6. Compile via TexLive.net cloud LaTeX API
@@ -182,7 +215,6 @@ export async function generateResumePDF(): Promise<Buffer> {
   const contentType = res.headers.get("content-type") ?? "";
   if (!res.ok || !contentType.includes("application/pdf")) {
     const errorText = await res.text();
-    // Show start + end of TeX log for maximum debug signal
     const snippet =
       errorText.length > 2000
         ? `${errorText.slice(0, 600)}\n\n[...truncated...]\n\n${errorText.slice(-1200)}`

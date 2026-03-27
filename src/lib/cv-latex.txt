@@ -21,27 +21,28 @@
 % Column Separation
 \columnratio{0.30}          
 \setlength{\columnsep}{2em} 
-\setlength{\columnseprule}{2pt} 
+\setlength{\columnseprule}{1pt} 
+\def\columnseprulecolor{\color{gray!40}}
 
 % Custom commands
-\newcommand{\resumetitle}[1]{
+\newcommand{\resumename}[1]{
     \begin{center}
-        \textbf{\huge #1}
+        \textbf{\Huge #1}
     \end{center}
 }
 
-\newcommand{\resumename}[1]{
+\newcommand{\resumetitle}[1]{
     \begin{center}
-        \textbf{\LARGE #1}
+        \textbf{\large #1}
     \end{center}
 }
 
 % Format for Main Section Headers (Right Column)
 \titleformat{\section}
-  {\large\bfseries} 
+  {\Large\bfseries\color{darkgray}} 
   {}                
   {0em}             
-  {\underline}      
+  {\vspace{-0.2em}\hrulefill\vspace{0.2em}\newline}      
 
 \setcounter{secnumdepth}{0}
 
@@ -55,18 +56,13 @@
     % ================= LEFT COLUMN (Sidebar) =================
     \raggedright 
     
-    % Photo Area (Commented out for portability)
-    % \begin{center}
-    %     \includegraphics[width=0.8\linewidth, height=0.8\linewidth, keepaspectratio]{photo.jpg} 
-    % \end{center}
-
     % Contact Header
     \vspace{1em}
     \begin{center}
-        \textbf{\large Contact}
+        \textbf{\Large Contact}
     \end{center}
     
-    \begin{itemize}[label=-]
+    \begin{itemize}[label=--]
         \item Mob: <<MOB>>
         \item Mail: \\ 
         {\footnotesize \href{mailto:<<MAIL>>}{<<MAIL>>}}
@@ -75,75 +71,50 @@
 
     \vspace{1em}
     \begin{center}
-        \textbf{\large Soft-skills}
+        \textbf{\Large Soft-skills}
     \end{center}
-    \begin{itemize}[label=-]
+    \begin{itemize}[label=--]
         <<SOFT_SKILLS>>
     \end{itemize}
 
     \vspace{1em}
     \begin{center}
-        \textbf{\large Software}
+        \textbf{\Large Software}
     \end{center}
-    \begin{itemize}[label=-]
+    \begin{itemize}[label=--]
         <<SOFTWARE_SKILLS>>
     \end{itemize}
 
     \vspace{1em}
     \begin{center}
-        \textbf{\large Languages}
+        \textbf{\Large Languages}
     \end{center}
-    \begin{itemize}[label=-]
+    \begin{itemize}[label=--]
         <<LANGUAGE_SKILLS>>
     \end{itemize}
 
-    \vspace{1em}
-    \begin{center}
-        \textbf{\large Hobbies}
-    \end{center}
-    \begin{itemize}[label=-]
-        \item Travel (Ready to deploy)
-        \item Reading
-    \end{itemize}
+    <<HOBBIES_SECTION>>
 
     \switchcolumn
     % ================= RIGHT COLUMN (Main Content) =================
     
     \justify 
 
-    % Adjusted Title for the Job
-    \resumetitle{<<ROLE>>}
+    % Name should be biggest
     \resumename{<<NAME>>}
+    \resumetitle{<<ROLE>>}
 
     \vspace{0.5em}
     
     % Tailored Summary
     <<SUMMARY>>
 
-    \section{Professional experience:}
-
+    \section*{Professional Experience}
     <<EXPERIENCES_LIST>>
 
-    \section{Certificates and Attestation}
-    \begin{itemize}[label=$\bullet$]
-        \item \textbf{Well Control Certification – IWCF} (Apr 2023 )| Online
-        \begin{itemize}[label=$\circ$]
-            \item Focus: Industrial Safety Standards, Pressure Control, and Operational Procedures in hazardous environments.
-        \end{itemize}
-        
-        \item \textbf{Well Intervention Training – IFP} (Oct 2023 – Jan 2024) | Ouargla, Algeria
-        \begin{itemize}[label=$\circ$]
-            \item Focus: Equipment Maintenance, Wireline Operations, and HSE Practices.
-        \end{itemize}
+    <<CERTIFICATES_SECTION>>
 
-        \item \textbf{McKinsey Forward Program} (Apr 2023 – Aug 2023) | Online
-        \begin{itemize}[label=$\circ$]
-            \item Focus: Problem Solving, Effective Communication, and Adaptability.
-        \end{itemize}
-    \end{itemize}
-
-    \section{Education:}
-    
+    \section*{Education}
     \begin{itemize}[label=$\bullet$]
         <<EDUCATION_LIST>>
     \end{itemize}
