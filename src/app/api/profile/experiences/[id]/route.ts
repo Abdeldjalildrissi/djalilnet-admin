@@ -82,6 +82,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error("DELETE experience error:", error)
     return NextResponse.json({ error: "Failed to delete experience" }, { status: 500 })
   }
 }

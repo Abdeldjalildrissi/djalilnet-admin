@@ -11,7 +11,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         style={{
           display: "flex",
           height: "100vh",
-          background: "transparent",
+          background: "#f8fafc",
           overflow: "hidden",
           position: "relative",
         }}
@@ -31,7 +31,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "1.5rem",
+              padding: "1rem md:1.5rem",
             }}
           >
             {children}

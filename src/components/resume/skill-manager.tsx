@@ -148,7 +148,7 @@ export function SkillManager() {
   async function onDelete(id: string) {
     if (!confirm("Are you sure you want to delete this skill?")) return
     try {
-      const res = await fetch(`/api/profile/skills/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/profile/skills/${id}`, { method: "DELETE", credentials: "include" })
       if (!res.ok) throw new Error("Failed to delete")
       toast({ title: "Deleted", description: "Skill removed." })
       fetchSkills()
@@ -199,7 +199,7 @@ export function SkillManager() {
                     catSkills.map(skill => (
                       <div 
                         key={skill.id}
-                        className="group relative flex items-center gap-1.5 bg-white/40 backdrop-blur-sm border border-white/20 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/60 transition-colors"
+                        className="group relative flex items-center gap-1.5 bg-white/60 border border-white/30 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-white/80 transition-colors"
                       >
                         {skill.name}
                         <button 
@@ -225,7 +225,7 @@ export function SkillManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/90 backdrop-blur-xl border-white/20">
+        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
           <DialogHeader>
             <DialogTitle>{editingSkill ? "Edit Skill" : "Add Skill"}</DialogTitle>
           </DialogHeader>

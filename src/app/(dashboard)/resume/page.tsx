@@ -24,7 +24,7 @@ export default function ResumePage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="bg-white/40 backdrop-blur-md border border-white/20 p-1">
+        <TabsList className="bg-white/50 backdrop-blur-sm border border-white/20 p-1">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile

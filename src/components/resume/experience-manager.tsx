@@ -44,8 +44,27 @@ import {
   Plus, 
   Trash2, 
   Pencil,
-  GripVertical
+  GripVertical,
+  Download
 } from "lucide-react"
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 const experienceSchema = z.object({
   id: z.string().optional(),
@@ -59,6 +78,85 @@ const experienceSchema = z.object({
 })
 
 type Experience = z.infer<typeof experienceSchema>
+
+function SortableExperienceCard({ exp, handleEdit, onDelete }: { exp: Experience, handleEdit: (exp: Experience) => void, onDelete: (id: string) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exp.id! })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+    position: "relative" as const,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className="bg-white/40 backdrop-blur-md border-white/20 hover:shadow-lg transition-all group overflow-hidden">
+        <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{exp.role}</CardTitle>
+              <CardDescription className="font-medium text-foreground">
+                {exp.company}
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 relative z-10">
+            <Button variant="ghost" size="icon" onClick={() => handleEdit(exp)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(exp.id!); }}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <div {...attributes} {...listeners} className="cursor-grab hover:bg-muted p-2 rounded flex items-center justify-center">
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {exp.period}
+            </div>
+            {exp.location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {exp.location}
+              </div>
+            )}
+            {exp.current && (
+              <Badge variant="secondary" className="bg-success/10 text-success hover:bg-success/20 border-0">
+                Current
+              </Badge>
+            )}
+          </div>
+          <ul className="space-y-1">
+            {exp.bullets.map((bullet, i) => (
+              <li key={i} className="text-sm flex gap-2">
+                <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 
 export function ExperienceManager() {
   const [experiences, setExperiences] = useState<Experience[]>([])
@@ -81,9 +179,37 @@ export function ExperienceManager() {
     },
   })
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   useEffect(() => {
     fetchExperiences()
   }, [])
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = experiences.findIndex((e) => e.id === active.id)
+    const newIndex = experiences.findIndex((e) => e.id === over.id)
+    const newOrder = arrayMove(experiences, oldIndex, newIndex)
+    setExperiences(newOrder)
+
+    try {
+      const payload = newOrder.map((exp, idx) => ({ id: exp.id, order: idx }))
+      await fetch("/api/profile/experiences/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: payload })
+      })
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save order." })
+      fetchExperiences()
+    }
+  }
 
   async function fetchExperiences() {
     try {
@@ -161,6 +287,7 @@ export function ExperienceManager() {
     try {
       const res = await fetch(`/api/profile/experiences/${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (!res.ok) throw new Error("Failed to delete")
@@ -187,9 +314,15 @@ export function ExperienceManager() {
     )
   }
 
+
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={() => window.open("/api/resume/download", "_blank")}>
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF (LaTeX)
+        </Button>
         <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
           <Plus className="mr-2 h-4 w-4" />
           Add Experience
@@ -205,66 +338,26 @@ export function ExperienceManager() {
           </p>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {experiences.map((exp) => (
-            <Card key={exp.id} className="bg-white/40 backdrop-blur-md border-white/20 hover:shadow-lg transition-all group overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Briefcase className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{exp.role}</CardTitle>
-                    <CardDescription className="font-medium text-foreground">
-                      {exp.company}
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(exp)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(exp.id!)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {exp.period}
-                  </div>
-                  {exp.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {exp.location}
-                    </div>
-                  )}
-                  {exp.current && (
-                    <Badge variant="secondary" className="bg-success/10 text-success hover:bg-success/20 border-0">
-                      Current
-                    </Badge>
-                  )}
-                </div>
-                <ul className="space-y-1">
-                  {exp.bullets.map((bullet, i) => (
-                    <li key={i} className="text-sm flex gap-2">
-                      <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid gap-4">
+            <SortableContext
+              items={experiences.map(e => e.id!)}
+              strategy={verticalListSortingStrategy}
+            >
+              {experiences.map((exp) => (
+                <SortableExperienceCard key={exp.id} exp={exp} handleEdit={handleEdit} onDelete={onDelete} />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-white/90 backdrop-blur-xl border-white/20 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-lg border-white/20 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingExp ? "Edit Experience" : "Add Experience"}</DialogTitle>
           </DialogHeader>
@@ -329,7 +422,7 @@ export function ExperienceManager() {
                 control={form.control}
                 name="current"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-white/10 p-4 bg-white/5">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white/50">
                     <FormControl>
                       <Checkbox
                         checked={field.value}

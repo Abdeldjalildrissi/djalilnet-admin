@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 import { authRateLimit, globalRateLimit } from "@/lib/ratelimit"
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // --- Rate Limiting Strategy ---
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || '127.0.0.1';
-  
+
   // Only rate-limit actual sign-in POST attempts — NOT page loads or session checks.
   // Applying the limiter to GET /login or GET /api/auth/* drains the bucket on every
   // navigation and triggers 429 before a single credential is submitted.
@@ -46,7 +46,7 @@ export async function proxy(request: NextRequest) {
       const loginUrl = new URL("/login", request.url)
       loginUrl.searchParams.set("callbackUrl", pathname)
       response = NextResponse.redirect(loginUrl)
-    } 
+    }
     // Already logged in → redirect away from login
     else if (isAuthRoute && sessionCookie) {
       response = NextResponse.redirect(new URL("/", request.url))

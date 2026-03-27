@@ -144,6 +144,7 @@ export function EducationManager() {
     try {
       const res = await fetch(`/api/profile/educations/${id}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (!res.ok) throw new Error("Failed to delete")
@@ -217,7 +218,7 @@ export function EducationManager() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white/90 backdrop-blur-xl border-white/20">
+        <DialogContent className="bg-white/95 backdrop-blur-lg border-white/20">
           <DialogHeader>
             <DialogTitle>{editingEdu ? "Edit Education" : "Add Education"}</DialogTitle>
           </DialogHeader>
