@@ -19,7 +19,10 @@ function escapeLatex(text: string): string {
     .replace(/\{/g, "\\{")
     .replace(/\}/g, "\\}")
     .replace(/~/g, "\\textasciitilde{}")
-    .replace(/\^/g, "\\textasciicircum{}");
+    .replace(/\^/g, "\\textasciicircum{}")
+    .replace(/\|/g, "\\textbar{}")
+    .replace(/</g, "\\textless{}")
+    .replace(/>/g, "\\textgreater{}");
 }
 
 export async function generateResumePDF(): Promise<Buffer> {
@@ -94,38 +97,19 @@ export async function generateResumePDF(): Promise<Buffer> {
     }
   }
 
-  // Inject Data
+  // Inject Data - Using replaceAll to cover multiple occurrences (like in href)
   const compiledTex = templateContent
-    .replace(
-      "<<NAME>>",
-      escapeLatex((personalInfo.name as string) || "DRISSI Abdeldjalil"),
-    )
-    .replace(
-      "<<ROLE>>",
-      escapeLatex(
-        (personalInfo.role as string) || "Electromechanical Engineer",
-      ),
-    )
-    .replace(
-      "<<MOB>>",
-      escapeLatex((personalInfo.phone as string) || "+213 790750708"),
-    )
-    .replace(
-      "<<MAIL>>",
-      escapeLatex(
-        (personalInfo.email as string) || "abdeldjalildrissi@gmail.com",
-      ),
-    )
-    .replace(
-      "<<ADDRESS>>",
-      escapeLatex((personalInfo.location as string) || "Algeria"),
-    )
-    .replace("<<SUMMARY>>", escapeLatex((personalInfo.tagline as string) || ""))
-    .replace("<<SOFT_SKILLS>>", softSkills)
-    .replace("<<SOFTWARE_SKILLS>>", softwareSkills)
-    .replace("<<LANGUAGE_SKILLS>>", languageSkills)
-    .replace("<<EXPERIENCES_LIST>>", experiencesLatex)
-    .replace("<<EDUCATION_LIST>>", educationLatex);
+    .replaceAll("<<NAME>>", escapeLatex((personalInfo.name as string) || "DRISSI Abdeldjalil"))
+    .replaceAll("<<ROLE>>", escapeLatex((personalInfo.role as string) || "Electromechanical Engineer"))
+    .replaceAll("<<MOB>>", escapeLatex((personalInfo.phone as string) || "+213 790750708"))
+    .replaceAll("<<MAIL>>", escapeLatex((personalInfo.email as string) || "abdeldjalildrissi@gmail.com"))
+    .replaceAll("<<ADDRESS>>", escapeLatex((personalInfo.location as string) || "Algeria"))
+    .replaceAll("<<SUMMARY>>", escapeLatex((personalInfo.tagline as string) || ""))
+    .replaceAll("<<SOFT_SKILLS>>", softSkills)
+    .replaceAll("<<SOFTWARE_SKILLS>>", softwareSkills)
+    .replaceAll("<<LANGUAGE_SKILLS>>", languageSkills)
+    .replaceAll("<<EXPERIENCES_LIST>>", experiencesLatex)
+    .replaceAll("<<EDUCATION_LIST>>", educationLatex);
 
   // 4. Compile via TexLive.net API (Robust for Serverless/Vercel)
   try {
