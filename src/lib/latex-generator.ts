@@ -111,18 +111,17 @@ export async function generateResumePDF(): Promise<Buffer> {
     .replaceAll("<<EXPERIENCES_LIST>>", experiencesLatex)
     .replaceAll("<<EDUCATION_LIST>>", educationLatex);
 
-  // 4. Compile via TexLive.net API (Robust for Serverless/Vercel)
+    // 4. Compile via TexLive.net API (Robust for Serverless/Vercel)
   try {
-    const payload = new URLSearchParams();
-    payload.append("filecontents[]", compiledTex);
-    payload.append("filename[]", "main.tex");
-    payload.append("engine", "pdflatex");
-    payload.append("return", "pdf");
+    const formData = new FormData();
+    formData.append("filecontents[]", compiledTex);
+    formData.append("filename[]", "document.tex");
+    formData.append("engine", "pdflatex");
+    formData.append("return", "pdf");
 
     const res = await fetch("https://texlive.net/cgi-bin/latexcgi", {
       method: "POST",
-      body: payload,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData,
     });
 
     const contentType = res.headers.get("content-type");
