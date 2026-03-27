@@ -49,7 +49,12 @@ export async function generateResumePDF(): Promise<Buffer> {
   // Experiences
   let experiencesLatex = "";
   for (const exp of exps) {
-    const titleLine = `\\textbf{${escapeLatex(exp.role)} | ${escapeLatex(exp.company)} (${escapeLatex(exp.period)}) ${exp.location ? escapeLatex(exp.location) : ""}}\n`;
+    const role = escapeLatex(exp.role);
+    const company = escapeLatex(exp.company);
+    const period = escapeLatex(exp.period).replace(/–/g, "--");
+    const location = exp.location ? escapeLatex(exp.location) : "";
+
+    const titleLine = `\\textbf{${role} \\textbar{} ${company} (${period}) ${location}}\n`;
     let bulletsLatex = "\\begin{itemize}[label=$\\bullet$]\n";
     if (Array.isArray(exp.bullets)) {
       exp.bullets.forEach((bullet: string) => {
@@ -63,7 +68,10 @@ export async function generateResumePDF(): Promise<Buffer> {
   // Education
   let educationLatex = "";
   for (const edu of edus) {
-    educationLatex += `\\item \\textbf{${escapeLatex(edu.degree)}} (${escapeLatex(edu.period)}) | ${escapeLatex(edu.school)}\n`;
+    const degree = escapeLatex(edu.degree);
+    const school = escapeLatex(edu.school);
+    const period = escapeLatex(edu.period).replace(/–/g, "--");
+    educationLatex += `\\item \\textbf{${degree}} (${period}) \\textbar{} ${school}\n`;
   }
 
   // Skills grouped by category
